@@ -1,0 +1,105 @@
+# Ouroboros Control Center
+
+ver:pending
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│  🐍 OUROBOROS PROMPT MANAGEMENT SYSTEM - Control Center                  │
+├──────────────────────────────────────────────────────────────────────────┤
+│  Status: ● running    Loop: active    Processed: 1    Pending: 2,432    │
+└──────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────┐  ┌─────────────────────────────┐
+│  SYSTEM HEALTH                          │  │  LOOP CONTROL               │
+├─────────────────────────────────────────┤  ├─────────────────────────────┤
+│  ● Database: connected                  │  │  [S] Start Loop             │
+│  ● Queue Bridge: active                 │  │  [P] Pause Loop             │
+│  ● Analyzer: ready                      │  │  [R] Run Once               │
+│  ● Sync Server: ws://localhost:3839     │  │  [C] Clear Queue            │
+│                                         │  │  [E] Export Results         │
+│  Uptime: 2h 34m                         │  │  [X] Emergency Stop         │
+└─────────────────────────────────────────┘  └─────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│  NEXT 10 PROMPTS (ranked by priority score)                              │
+├──────────────────────────────────────────────────────────────────────────┤
+│  #   Score  P  Conf  Prompt                                              │
+│  ─   ─────  ─  ────  ────────────────────────────────────────────────── │
+│  1   7.25   2  0.60  Review and update system_improvement...             │
+│  2   7.06   2  0.57  Review and update 01_CODES.txt...                   │
+│  3   6.92   2  0.54  Complete the TODO items from: Analyze...            │
+│  4   3.52   8  0.85  Pack the ISO for Geometry OS...                     │
+│  5   3.52   8  0.85  Boot Linux on vectors...                            │
+│  6   3.51   8  0.84  Why would we simulate booting linux...              │
+│  7   3.50   8  0.83  Implement GPU-accelerated path finding...           │
+│  8   3.48   8  0.82  Add memory compression to cognitive...              │
+│  9   3.45   8  0.81  Optimize spatial interpreter for...                 │
+│ 10  3.42   8  0.80  Integrate GQR protocol with visual...                │
+├──────────────────────────────────────────────────────────────────────────┤
+│  [V] View Details    [E] Edit Priority    [D] Delete    [A] Add New      │
+└──────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────┐  ┌─────────────────────────────┐
+│  RECENT COMPLETED                       │  │  QUALITY DISTRIBUTION       │
+├─────────────────────────────────────────┤  ├─────────────────────────────┤
+│  🔍 Analyze Hilbert curve performance   │  │  ✅ Complete:    0 (0%)     │
+│     Quality: NEEDS_REVIEW (60%)         │  │  ◐ Partial:     0 (0%)      │
+│     Follow-ups: 1 generated             │  │  ❌ Failed:     0 (0%)      │
+│     Completed: 16:05 CDT                │  │  🔍 Needs Review: 1 (100%)  │
+│                                         │  │  ❓ Unclear:    0 (0%)      │
+│  [Enter] View Full Analysis             │  │                             │
+└─────────────────────────────────────────┘  │  Total: 1 analyzed          │
+                                             └─────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│  ADD NEW PROMPT                                                           │
+├──────────────────────────────────────────────────────────────────────────┤
+│  ┌────────────────────────────────────────────────────────────────────┐  │
+│  │ _                                                                  │  │
+│  └────────────────────────────────────────────────────────────────────┘  │
+│  Priority: [1-10] _____  Source: manual                                  │
+│  [Enter] Submit    [Esc] Cancel                                           │
+└──────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│  PROVIDER STATUS                                                          │
+├──────────────────────────────────────────────────────────────────────────┤
+│  ● GLM      [████████░░] 1,920/2,400  (80%)  Available                   │
+│  ○ Gemini   [██████████] 1,500/1,500  (100%) Rate Limited                │
+│  ○ Claude   [████░░░░░░]    10/25     (40%)  Rate Limited                │
+│  ● Local    [░░░░░░░░░░]    45/1,000  (5%)   Available                   │
+│                                                                           │
+│  Next available: GLM, Local                                               │
+└──────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│  LEARNED RULES (from Semantic Analyzer)                                   │
+├──────────────────────────────────────────────────────────────────────────┤
+│  ✓ Cache optimization improves metrics (85% success)                      │
+│  ✓ Exponential backoff for retries (92% success)                         │
+│  ✗ Parallelization often regresses (30% success)                         │
+│  ◐ JIT compilation testing (50% testing)                                  │
+│                                                                           │
+│  [G] Generate More Rules    [V] View All Rules    [D] Disable Rule       │
+└──────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│  ACTIVITY LOG (last 10 events)                                            │
+├──────────────────────────────────────────────────────────────────────────┤
+│  16:14:32  [INFO]   Response analyzer created                             │
+│  16:12:00  [INFO]   Follow-up enqueued: Verify Hilbert results            │
+│  16:06:45  [SUCCESS] Completed: prompt_5a78666a                           │
+│  16:06:44  [INFO]   Processing: Analyze Hilbert curve...                  │
+│  16:05:00  [INFO]   Automated loop initialized                            │
+│  15:57:00  [INFO]   Prompt prioritizer created                            │
+│  15:41:00  [INFO]   CTRM manager connected (2,431 prompts)                │
+│  15:38:00  [INFO]   Queue bridge initialized                             │
+│  15:35:00  [INFO]   Semantic analyzer loaded                             │
+│  15:30:00  [START]  Ouroboros system started                             │
+└──────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│  KEYBOARD SHORTCUTS                                                       │
+├──────────────────────────────────────────────────────────────────────────┤
+│  [S] Start    [P] Pause    [R] Run Once    [N] New Prompt    [Q] Quit    │
+│  [1-9] Jump to prompt    [Enter] Select    [Tab] Next section            │
+└──────────────────────────────────────────────────────────────────────────┘

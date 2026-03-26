@@ -9,42 +9,102 @@ The foundation for AI-driven development. Provides:
 - REST + WebSocket API for integration
 
 Usage:
-    from aipm import PromptSystem, ProjectManager, Dashboard
+    from aipm import AIPM
     
     # Initialize the system
-    system = PromptSystem()
-    pm = ProjectManager()
-    dashboard = Dashboard()
+    aipm = AIPM()
     
     # Create a project
-    project = pm.create_project(
+    project = aipm.create_project(
         name="My App",
         goal="Build something amazing",
-        path="/path/to/project"
     )
     
+    # Add a prompt
+    prompt_id = aipm.enqueue("Write code for feature X")
+    
     # Process prompts
-    result = system.process_next()
+    result = await aipm.process_next()
 """
 
 __version__ = "0.1.0"
 __author__ = "Jericho"
 
-from aipm.core.engine import PromptEngine, PromptSystem
+# Configuration
+from aipm.config import (
+    DATA_DIR,
+    CTRM_DB,
+    QUEUE_DB,
+    PROJECTS_DB,
+    DEFAULT_PROVIDER,
+)
+
+# Core components (simple versions)
+from aipm.core.engine import PromptEngine, Prompt, PromptCategory
 from aipm.core.queue import PromptQueue
 from aipm.core.analyzer import ResponseAnalyzer
 from aipm.core.prioritizer import PromptPrioritizer
-from aipm.ctrm.database import CTRMDatabase
-from aipm.project.manager import ProjectManager
+
+# Enhanced components (from ouroboros)
+try:
+    from aipm.core.ctrm_prompt_manager import CTRMPromptManager
+    from aipm.core.unified_prompt_engine import UnifiedPromptEngine
+    from aipm.core.queue_bridge import QueueBridge
+    from aipm.core.automated_loop import AutomatedPromptLoop
+    ENHANCED_AVAILABLE = True
+except ImportError:
+    ENHANCED_AVAILABLE = False
+
+# CTRM
+from aipm.ctrm.database import CTRMDatabase, Truth
+
+# Project management
+from aipm.project.manager import ProjectManager, Project, Task
+
+# ASCII World
 from aipm.ascii_world.dashboard import Dashboard
 
+# Integration
+from aipm.integration import AIPM, get_aipm
+
 __all__ = [
+    # Main entry point
+    "AIPM",
+    "get_aipm",
+    
+    # Configuration
+    "DATA_DIR",
+    "CTRM_DB",
+    "QUEUE_DB",
+    "PROJECTS_DB",
+    "DEFAULT_PROVIDER",
+    
+    # Core (simple)
     "PromptEngine",
-    "PromptSystem",
+    "Prompt",
+    "PromptCategory",
     "PromptQueue",
     "ResponseAnalyzer",
     "PromptPrioritizer",
+    
+    # Core (enhanced)
+    "CTRMPromptManager",
+    "UnifiedPromptEngine",
+    "QueueBridge",
+    "AutomatedPromptLoop",
+    
+    # CTRM
     "CTRMDatabase",
+    "Truth",
+    
+    # Project management
     "ProjectManager",
+    "Project",
+    "Task",
+    
+    # ASCII World
     "Dashboard",
+    
+    # Status
+    "ENHANCED_AVAILABLE",
 ]

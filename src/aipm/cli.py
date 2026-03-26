@@ -15,8 +15,7 @@ from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
 
-from aipm.core.engine import PromptSystem, Prompt, PromptCategory
-from aipm.project.manager import ProjectManager, TaskPriority
+from aipm import AIPM, get_aipm, CTRM_DB, ENHANCED_AVAILABLE
 
 
 console = Console()
@@ -25,7 +24,16 @@ console = Console()
 @click.group()
 @click.version_option(version="0.1.0")
 def main():
-    """AIPM - AI Project Manager"""
+    """AIPM - AI Project Manager
+    
+    The foundation for AI-driven development.
+    
+    Examples:
+        aipm project create -n "My App" -g "Build X"
+        aipm prompt "Write code for X" -p 1
+        aipm process next
+        aipm serve --port 8080
+    """
     pass
 
 
@@ -41,9 +49,9 @@ def project():
 @click.option("--path", "-p", type=click.Path(), help="Project path")
 def project_create(name: str, goal: str, path: Optional[str]):
     """Create a new project"""
-    pm = ProjectManager()
+    aipm = get_aipm()
     
-    project = pm.create_project(
+    project = aipm.create_project(
         name=name,
         goal=goal,
         path=Path(path) if path else None,
@@ -61,22 +69,22 @@ def project_create(name: str, goal: str, path: Optional[str]):
 @project.command("list")
 def project_list():
     """List all projects"""
-    pm = ProjectManager()
-    projects = pm.list_projects()
+    aipm = get_aipm()
+    projects = aipm.list_projects()
     
     table = Table(title="Projects")
     table.add_column("ID", style="cyan")
     table.add_column("Name", style="green")
     table.add_column("Goal", style="white")
-    table.add_column("Completion", style="yellow")
+    table.add_column("Tasks", style="yellow")
     
     for p in projects:
-        stats = pm.get_project_stats(p.id)
+        stats = aipm.projects.get_project_stats(p.id)
         table.add_row(
             p.id,
             p.name,
             p.goal[:40] + "..." if len(p.goal) > 40 else p.goal,
-            f"{stats['completion_percentage']:.1f}%",
+            str(stats.get('total_tasks', 0)),
         )
     
     console.print(table)
@@ -86,15 +94,15 @@ def project_list():
 @click.argument("project_id")
 def project_show(project_id: str):
     """Show project details"""
-    pm = ProjectManager()
-    project = pm.get_project(project_id)
+    aipm = get_aipm()
+    project = aipm.get_project(project_id)
     
     if not project:
         console.print(f"[red]Project not found: {project_id}[/red]")
         return
     
-    stats = pm.get_project_stats(project_id)
-    tasks = pm.get_project_tasks(project_id)
+    stats = aipm.projects.get_project_stats(project_id)
+    tasks = aipm.projects.get_project_tasks(project_id)
     
     console.print(Panel(
         f"[bold]{project.name}[/bold]\n"
@@ -104,8 +112,6 @@ def project_show(project_id: str):
         f"Tasks: {stats['total_tasks']}\n"
         f"Completed: {stats['completed']}\n"
         f"Pending: {stats['pending']}\n"
-        f"In Progress: {stats['in_progress']}\n"
-        f"Blocked: {stats['blocked']}\n"
         f"\n"
         f"Completion: {stats['completion_percentage']:.1f}%",
         title=f"Project: {project_id}",
@@ -138,12 +144,12 @@ def task():
 @click.option("--priority", "-p", type=click.Choice(["critical", "high", "medium", "low"]), default="medium")
 def task_add(project_id: str, name: str, description: str, priority: str):
     """Add a task to a project"""
-    pm = ProjectManager()
-    task = pm.add_task(
+    aipm = get_aipm()
+    task = aipm.add_task(
         project_id=project_id,
         name=name,
         description=description,
-        priority=TaskPriority(priority),
+        priority=priority,
     )
     
     console.print(f"[green]✓[/green] Task created: {task.id}")
@@ -158,36 +164,40 @@ def process():
 @process.command("next")
 def process_next():
     """Process the next prompt"""
-    system = PromptSystem()
-    result = asyncio.run(system.process_next())
-    console.print_json(json.dumps(result, indent=2))
+    aipm = get_aipm()
+    
+    async def run():
+        result = await aipm.process_next()
+        console.print_json(json.dumps(result, indent=2, default=str))
+    
+    asyncio.run(run())
 
 
 @process.command("forever")
 @click.option("--interval", "-i", default=60, help="Interval in seconds")
 def process_forever(interval: int):
     """Run the processing loop forever"""
-    system = PromptSystem()
+    aipm = get_aipm()
     console.print(f"[cyan]Starting processing loop (interval: {interval}s)[/cyan]")
-    asyncio.run(system.run_forever(interval=interval))
+    asyncio.run(aipm.run_loop(interval=interval))
 
 
 @process.command("status")
 def process_status():
     """Show queue status"""
-    system = PromptSystem()
-    stats = system.queue.get_stats()
+    aipm = get_aipm()
+    stats = aipm.get_stats()
     
     table = Table(title="Queue Status")
     table.add_column("Metric", style="cyan")
     table.add_column("Value", style="green")
     
-    table.add_row("Total", str(stats["total"]))
-    table.add_row("Pending", str(stats["pending"]))
-    table.add_row("Completed Today", str(stats["completed_today"]))
-    
-    for status, count in stats["by_status"].items():
-        table.add_row(f"  {status}", str(count))
+    table.add_row("Pending", str(stats['queue'].get('pending_count', 0)))
+    table.add_row("Processing", str(stats['queue'].get('processing_count', 0)))
+    table.add_row("Completed", str(stats['queue'].get('completed_count', 0)))
+    table.add_row("Projects", str(stats['projects']))
+    table.add_row("Data Dir", stats['data_dir'])
+    table.add_row("Enhanced Mode", "Yes" if ENHANCED_AVAILABLE else "No")
     
     console.print(table)
 
@@ -198,49 +208,45 @@ def process_status():
 @click.option("--priority", "-p", default=5, help="Priority (1-10)")
 def prompt(text: str, category: str, priority: int):
     """Add a prompt to the queue"""
-    system = PromptSystem()
+    aipm = get_aipm()
     
-    prompt = Prompt(
-        id=f"prompt_{datetime.now().strftime('%Y%m%d%H%M%S')}",
-        text=text,
-        category=PromptCategory(category),
+    prompt_id = aipm.enqueue(
+        prompt=text,
         priority=priority,
+        source="cli",
     )
     
-    system.add_prompt(prompt)
-    console.print(f"[green]✓[/green] Prompt added: {prompt.id}")
+    console.print(f"[green]✓[/green] Prompt added: {prompt_id}")
 
 
 @main.command()
 @click.option("--port", "-p", default=8080, help="Server port")
 def serve(port: int):
     """Start the API server"""
-    from aipm.api.server import APIServer
-    
-    server = APIServer(port=port)
-    asyncio.run(server.run())
+    console.print(f"[yellow]Starting API server on port {port}...[/yellow]")
+    console.print(f"[cyan]This will integrate the full API server in a future update.[/cyan]")
+    console.print(f"[dim]For now, use: python -m aipm.api.server[/dim]")
 
 
 @main.command()
 def status():
     """Show system status"""
-    system = PromptSystem()
-    pm = ProjectManager()
-    
-    # Queue stats
-    stats = system.queue.get_stats()
-    
-    # Projects
-    projects = pm.list_projects()
+    aipm = get_aipm()
+    stats = aipm.get_stats()
     
     console.print(Panel(
         f"[bold cyan]Queue[/bold cyan]\n"
-        f"  Total: {stats['total']}\n"
-        f"  Pending: {stats['pending']}\n"
-        f"  Completed Today: {stats['completed_today']}\n"
+        f"  Total: {stats['queue'].get('total', 'N/A')}\n"
+        f"  Pending: {stats['queue'].get('pending_count', 0)}\n"
+        f"  Completed Today: {stats['queue'].get('completed_count', 0)}\n"
         f"\n"
         f"[bold cyan]Projects[/bold cyan]\n"
-        f"  Total: {len(projects)}",
+        f"  Total: {stats['projects']}\n"
+        f"\n"
+        f"[bold cyan]Configuration[/bold cyan]\n"
+        f"  Data Dir: {stats['data_dir']}\n"
+        f"  CTRM DB: {CTRM_DB}\n"
+        f"  Enhanced: {'Yes' if ENHANCED_AVAILABLE else 'No'}",
         title="AIPM Status",
         border_style="cyan",
     ))
@@ -250,19 +256,22 @@ def status():
 @click.option("--port", "-p", default=8080, help="Port to serve on")
 def dashboard(port: int):
     """Start the ASCII dashboard server"""
-    from aipm.ascii_world.dashboard import Dashboard
+    import asyncio
+    from aiohttp import web
     
-    dashboard = Dashboard()
+    aipm = get_aipm()
     
     async def serve_dashboard():
-        from aiohttp import web
-        
         app = web.Application()
         
-        async def handle(request):
-            return web.Response(text=dashboard.render(), content_type="text/plain")
+        async def handle_ascii(request):
+            return web.Response(text=aipm.get_dashboard(), content_type="text/plain")
         
-        app.router.add_get("/", handle)
+        async def handle_html(request):
+            return web.Response(text=aipm.get_control_center_html(), content_type="text/html")
+        
+        app.router.add_get("/", handle_ascii)
+        app.router.add_get("/dashboard", handle_html)
         
         runner = web.AppRunner(app)
         await runner.setup()
@@ -270,6 +279,8 @@ def dashboard(port: int):
         await site.start()
         
         console.print(f"[green]Dashboard serving at http://localhost:{port}[/green]")
+        console.print(f"[cyan]ASCII: http://localhost:{port}/[/cyan]")
+        console.print(f"[cyan]HTML: http://localhost:{port}/dashboard[/cyan]")
         
         while True:
             await asyncio.sleep(3600)
