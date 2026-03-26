@@ -89,9 +89,8 @@ class CTRMPromptManager:
                 ORDER BY priority ASC, ctrm_confidence DESC
                 LIMIT ?
             """
-            conn.execute(query, (status, priority, limit))
-            
-            rows = conn.fetchall()
+            cursor = conn.execute(query, (status, limit))
+            rows = cursor.fetchall()
             
             return [
                 {

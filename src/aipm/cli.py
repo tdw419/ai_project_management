@@ -16,6 +16,7 @@ from rich.table import Table
 from rich.panel import Panel
 
 from aipm import AIPM, get_aipm, CTRM_DB, ENHANCED_AVAILABLE
+from aipm.core.simple_bridge import SimpleQueueBridge
 
 
 console = Console()
@@ -286,6 +287,83 @@ def dashboard(port: int):
             await asyncio.sleep(3600)
     
     asyncio.run(serve_dashboard())
+
+
+@main.group()
+def model():
+    """LM Studio model management"""
+    pass
+
+
+@model.command("list")
+def model_list():
+    """List available models"""
+    async def _list():
+        bridge = SimpleQueueBridge()
+        
+        if not await bridge.is_available():
+            console.print("[red]LM Studio is not running at http://localhost:1234[/red]")
+            console.print("[yellow]Start LM Studio and ensure the server is enabled.[/yellow]")
+            return
+        
+        models = await bridge.list_models()
+        
+        table = Table(title="Available Models")
+        table.add_column("Status", style="cyan", width=12)
+        table.add_column("Model Key", style="green")
+        table.add_column("Display Name", style="white")
+        
+        for m in models:
+            status = "✅ LOADED" if m.is_loaded else "⚪ available"
+            table.add_row(status, m.key, m.display_name)
+        
+        console.print(table)
+        
+        loaded = await bridge.get_loaded_model()
+        if not loaded:
+            console.print("\n[yellow]No model currently loaded.[/yellow]")
+            console.print("[cyan]Load a model in LM Studio GUI or use: aipm model load <model_key>[/cyan]")
+    
+    asyncio.run(_list())
+
+
+@model.command()
+@click.argument("model_key")
+def load(model_key: str):
+    """Load a model in LM Studio"""
+    async def _load():
+        bridge = SimpleQueueBridge()
+        
+        console.print(f"[cyan]Loading model: {model_key}[/cyan]")
+        result = await bridge.load_model(model_key)
+        
+        if result["success"]:
+            console.print(f"[green]✓ {result['message']}[/green]")
+        else:
+            console.print(f"[red]✗ {result['message']}[/red]")
+    
+    asyncio.run(_load())
+
+
+@model.command()
+def status():
+    """Show current model status"""
+    async def _status():
+        bridge = SimpleQueueBridge()
+        
+        if not await bridge.is_available():
+            console.print("[red]LM Studio is not running at http://localhost:1234[/red]")
+            return
+        
+        loaded = await bridge.get_loaded_model()
+        
+        if loaded:
+            console.print(f"[green]Currently loaded: {loaded}[/green]")
+        else:
+            console.print("[yellow]No model currently loaded[/yellow]")
+            console.print("[cyan]Load a model in LM Studio GUI first, then use 'aipm process next'[/cyan]")
+    
+    asyncio.run(_status())
 
 
 if __name__ == "__main__":
