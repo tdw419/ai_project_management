@@ -30,7 +30,7 @@
 - [x] 🔥 Implement failover: LM Studio ↔ Pi Agent (GLM-5)
 - [x] Add self-healing for SQLite database locks
 - [x] Add recovery for corrupted state files
-- [ ] Create health check endpoints
+- [x] Create health check endpoints
 
 ### 3. CLI/Dashboard Parity
 

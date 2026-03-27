@@ -18,6 +18,7 @@ import aiofiles
 from aipm.core.engine import PromptSystem, Prompt
 from aipm.project.manager import ProjectManager
 from aipm.ascii_world.dashboard import Dashboard, HTMLDashboard
+from aipm.api.health import handle_health, handle_ping
 
 
 class APIServer:
@@ -31,6 +32,8 @@ class APIServer:
     - POST /api/prompts - Add new prompt
     - GET /api/analyze/:id - Analyze a prompt
     - POST /api/control - Control actions
+    - GET /api/health - System health check (Phase 1.2)
+    - GET /ping - Simple heartbeat
     - WS /ws - Real-time updates
     """
     
@@ -55,6 +58,8 @@ class APIServer:
         # Routes
         app.router.add_get("/", self.handle_index)
         app.router.add_get("/control_center.html", self.handle_html_dashboard)
+        app.router.add_get("/api/health", handle_health)
+        app.router.add_get("/ping", handle_ping)
         app.router.add_get("/api/prompts", self.handle_get_prompts)
         app.router.add_get("/api/stats", self.handle_get_stats)
         app.router.add_get("/api/completed", self.handle_get_completed)
