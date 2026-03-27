@@ -50,6 +50,8 @@ from aipm.loop_control import LoopController, LoopCommand, LoopState, LoopStatus
 # Add AutoSpec integration (vendored)
 try:
     from autospec.autoresearch.loop import ExperimentLoop, Hypothesis
+    from aipm.core.autospec_manager import AutoSpecManager, AutoSpecPlan
+    from aipm.core.unified_prompt_engine import create_default_engine
     HAS_AUTOSPEC = True
 except ImportError:
     HAS_AUTOSPEC = False
@@ -94,16 +96,24 @@ class ContinuousLoop:
         else:
             self.pi_provider = None
         
-        # Add AutoSpec experiment tracking
+        # Add AutoSpec experiment tracking (Phase 2.1)
         if HAS_AUTOSPEC:
             self.experiment_loop = ExperimentLoop(
                 project_path=Path(__file__).parent,
                 target_file="results.tsv",
                 eval_command="pytest tests/ -q"
             )
-            print("✅ AutoSpec ExperimentLoop initialized")
+            try:
+                engine_path = Path(__file__).parent / ".ouroboros"
+                self.engine = create_default_engine(engine_path)
+                self.autospec = AutoSpecManager(self.engine, self.experiment_loop)
+                print("✅ AutoSpec Manager initialized (Phase 2.1)")
+            except Exception as e:
+                print(f"⚠️ Failed to initialize AutoSpec Manager: {e}")
+                self.autospec = None
         else:
             self.experiment_loop = None
+            self.autospec = None
         
         # RAG World Model for context injection (Phase 1.1)
         if HAS_RAG:
@@ -412,16 +422,38 @@ class ContinuousLoop:
                 print(content)
             print("-" * 70)
             
-            # AutoSpec: Check if response contains H/T/M/B experiment
-            if self.experiment_loop and content:
-                self._run_autospec_experiment(content, prompt['id'])
+            # Phase 2.1: AutoSpec Hypothesis Cycle
+            autospec_status = ""
+            if self.autospec and content:
+                if self.autospec.should_run_experiment(prompt['prompt'], content):
+                    print("🧪 Task identified as experiment-ready. Formulating hypothesis...")
+                    
+                    # 1. Try to extract existing plan
+                    plan = self.autospec.extract_plan(content, prompt['id'])
+                    
+                    # 2. If no formal plan, formulate one (Phase 2.1 automation)
+                    if not plan:
+                        plan = await self.autospec.formulate_hypothesis(
+                            prompt['prompt'], content, system_context
+                        )
+                    
+                    # 3. Run the experiment
+                    if plan:
+                        exp_result = self.autospec.run_experiment(plan)
+                        
+                        if exp_result.get("success"):
+                            status_icon = "✅" if exp_result["status"] == "keep" else "⏹️"
+                            print(f"{status_icon} [AutoSpec] Result: {exp_result['status']} (Metric: {exp_result['metric']})")
+                            autospec_status = f"\nAutoSpec: {exp_result['status']} ({exp_result['metric']})"
+                        else:
+                            print(f"❌ [AutoSpec] Failed: {exp_result.get('error')}")
             
             # Mark as completed
             self.aipm.ctrm.complete(
                 prompt['id'],
                 result=content,
                 verified=True,
-                notes=f"Processed via {self.model} in {elapsed:.2f}s"
+                notes=f"Processed via {self.model} in {elapsed:.2f}s{autospec_status}"
             )
 
             # Ouroboros: mark roadmap tasks as [x] in ROADMAP.md
@@ -486,42 +518,19 @@ class ContinuousLoop:
                 if project.path:
                     context_parts.append(f"Location: {project.path}")
         
-        return "\n".join(context_parts)
-    
-    def _run_autospec_experiment(self, content: str, prompt_id: str):
-        """Extract hypothesis and run experiment via AutoSpec."""
-        # Simple parsing for H/T/M/B
-        lines = content.split('\n')
-        h, t, m, b = "", "", "", ""
-        for line in lines:
-            line = line.strip(' │\t')
-            if line.startswith('H:'): h = line[2:].strip()
-            elif line.startswith('T:'): t = line[2:].strip()
-            elif line.startswith('M:'): m = line[2:].strip()
-            elif line.startswith('B:'): b = line[2:].strip()
+        # Phase 2.1: Suggest H/T/M/B for engineering tasks
+        prompt_text = prompt.get('prompt', '').lower()
+        eng_keywords = ['optimize', 'refactor', 'implement', 'fix', 'improve', 'speed up', 'reduce']
+        if any(kw in prompt_text for kw in eng_keywords):
+            context_parts.append("\n## Engineering Protocol (AutoSpec)")
+            context_parts.append("This is an engineering task. Please follow the H/T/M/B hypothesis format:")
+            context_parts.append("H: <hypothesis - what you are testing>")
+            context_parts.append("T: <target - file to modify>")
+            context_parts.append("M: <metric - success criteria (e.g. latency, error rate)>")
+            context_parts.append("B: <budget - max attempts/time>")
+            context_parts.append("\nFollow this with a markdown code block containing the changes.")
         
-        if h and t:
-            # Find code block
-            code_match = re.search(r'```python\n(.*?)```', content, re.DOTALL)
-            if not code_match:
-                code_match = re.search(r'```(?:\w+)?\n(.*?)```', content, re.DOTALL)
-                
-            code_changes = {t: code_match.group(1).strip()} if code_match else {}
-            
-            # Hypothesis from autospec
-            hyp = Hypothesis(
-                task_id=prompt_id,
-                description=h,
-                expected_improvement=0.1,
-                code_changes=code_changes
-            )
-            
-            print(f"\n🚀 Running AutoSpec Experiment: {h}")
-            exp_result = self.experiment_loop.run(hyp)
-            print(f"📊 AutoSpec Result: {exp_result.status.value} (Metric: {exp_result.metric})")
-            
-            return exp_result
-        return None
+        return "\n".join(context_parts)
     
     def update_dashboard(self):
         """Update the ASCII dashboard"""

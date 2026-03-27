@@ -47,7 +47,7 @@
 
 ### 1. Full AutoSpec Lifecycle
 
-- [ ] 🔥 Automate H/T/M/B hypothesis testing cycle
+- [x] 🔥 Automate H/T/M/B hypothesis testing cycle
 - [ ] Auto-feed results.tsv → CTRM for learning
 - [ ] Add hypothesis confidence scoring
 - [ ] Implement budget tracking per hypothesis
