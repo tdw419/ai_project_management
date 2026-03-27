@@ -134,12 +134,6 @@ class CTRMDatabase:
                 json.dumps(truth.tags) if isinstance(truth.tags, list) else str(truth.tags),
             ))
             # FTS is auto-updated by triggers on the truths table
-            
-            # Update FTS index
-            conn.execute("""
-                INSERT OR REPLACE INTO truths_fts (id, content, tags)
-                VALUES (?, ?, ?)
-            """, (truth.id, truth.content, " ".join(truth.tags)))
     
     def get(self, truth_id: str) -> Optional[Truth]:
         """Get a truth by ID"""
