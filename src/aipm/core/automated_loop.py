@@ -13,16 +13,25 @@ The complete automation cycle:
 
 import asyncio
 import json
+import re
 import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Optional, List, Dict
 
+# Add AutoSpec integration (vendored)
+try:
+    from autospec.autoresearch.loop import ExperimentLoop, Hypothesis
+    HAS_AUTOSPEC = True
+except ImportError:
+    HAS_AUTOSPEC = False
+
 # Add paths
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "vendor"))
 
-from ouroboros.core.ctrm_prompt_manager import CTRMPromptManager, CTRM_DB
-from ouroboros.core.prompt_prioritizer import PromptPrioritizer, PromptGenerator
+from aipm.core.ctrm_prompt_manager import CTRMPromptManager, CTRM_DB
+from aipm.core.prompt_prioritizer import PromptPrioritizer, PromptGenerator
 
 
 class AutomatedPromptLoop:
@@ -45,6 +54,17 @@ class AutomatedPromptLoop:
         self.prioritizer = PromptPrioritizer(db_path)
         self.generator = PromptGenerator(db_path)
         
+        # Add AutoSpec experiment tracking
+        if HAS_AUTOSPEC:
+            self.experiment_loop = ExperimentLoop(
+                project_path=Path(__file__).parent.parent.parent.parent,
+                target_file="results.tsv",
+                eval_command="pytest tests/ -q"
+            )
+            print("✅ AutoSpec ExperimentLoop initialized")
+        else:
+            self.experiment_loop = None
+            
         self.stats = {
             'processed': 0,
             'generated': 0,
@@ -95,6 +115,10 @@ class AutomatedPromptLoop:
             # Simulate result for now
             result = await self._process_prompt(prompt_text)
             
+            # AutoSpec: Check if response contains H/T/M/B experiment
+            if self.experiment_loop and result.get('content'):
+                self._run_autospec_experiment(result.get('content', ''), prompt_id)
+            
             # 4. COMPLETE - Store result
             self.manager.complete(
                 prompt_id,
@@ -107,7 +131,7 @@ class AutomatedPromptLoop:
             print(f"\n✅ Completed: {prompt_id}")
             
             # 5. ANALYZE - Analyze response quality
-            from ouroboros.core.response_analyzer import PromptResponseAnalyzer
+            from aipm.core.response_analyzer import PromptResponseAnalyzer
             analyzer = PromptResponseAnalyzer()
             analysis = analyzer.analyze_response(prompt_id)
             
@@ -185,6 +209,41 @@ class AutomatedPromptLoop:
             'success': True,
             'content': f"Processed: {prompt_text[:100]}...\n\nResult: Analysis complete. TODO: Add implementation details."
         }
+    
+    def _run_autospec_experiment(self, content: str, prompt_id: str):
+        """Extract hypothesis and run experiment via AutoSpec."""
+        # Simple parsing for H/T/M/B
+        lines = content.split('\n')
+        h, t, m, b = "", "", "", ""
+        for line in lines:
+            line = line.strip(' │\t')
+            if line.startswith('H:'): h = line[2:].strip()
+            elif line.startswith('T:'): t = line[2:].strip()
+            elif line.startswith('M:'): m = line[2:].strip()
+            elif line.startswith('B:'): b = line[2:].strip()
+        
+        if h and t:
+            # Find code block
+            code_match = re.search(r'```python\n(.*?)```', content, re.DOTALL)
+            if not code_match:
+                code_match = re.search(r'```(?:\w+)?\n(.*?)```', content, re.DOTALL)
+                
+            code_changes = {t: code_match.group(1).strip()} if code_match else {}
+            
+            # Hypothesis from autospec
+            hyp = Hypothesis(
+                task_id=prompt_id,
+                description=h,
+                expected_improvement=0.1,
+                code_changes=code_changes
+            )
+            
+            print(f"\n🚀 Running AutoSpec Experiment: {h}")
+            exp_result = self.experiment_loop.run(hyp)
+            print(f"📊 AutoSpec Result: {exp_result.status.value} (Metric: {exp_result.metric})")
+            
+            return exp_result
+        return None
     
     async def run_forever(self, 
                           interval_seconds: int = 60,

@@ -52,7 +52,10 @@ Repository = "https://github.com/tdw419/aipm"
 Issues = "https://github.com/tdw419/aipm/issues"
 
 [tool.setuptools.packages.find]
-where = ["src"]
+where = ["src", "vendor"]
+
+[tool.setuptools]
+package-dir = {"" = ".", "aipm" = "src/aipm", "vendor" = "vendor"}
 
 [tool.black]
 line-length = 100

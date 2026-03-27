@@ -16,16 +16,25 @@ import sys
 import asyncio
 import signal
 import time
+import re
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
 # Add AIPM to path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
+sys.path.insert(0, str(Path(__file__).parent / "vendor"))
 
 from aipm import AIPM, get_aipm
 from aipm.core.simple_bridge import SimpleQueueBridge
 from aipm.config import DEFAULT_REASONING_MODEL, DEFAULT_VISION_MODEL
+
+# Add AutoSpec integration (vendored)
+try:
+    from autospec.autoresearch.loop import ExperimentLoop, Hypothesis
+    HAS_AUTOSPEC = True
+except ImportError:
+    HAS_AUTOSPEC = False
 
 
 class ContinuousLoop:
@@ -47,6 +56,17 @@ class ContinuousLoop:
         self.processed_count = 0
         self.error_count = 0
         self.running = True
+        
+        # Add AutoSpec experiment tracking
+        if HAS_AUTOSPEC:
+            self.experiment_loop = ExperimentLoop(
+                project_path=Path(__file__).parent,
+                target_file="results.tsv",
+                eval_command="pytest tests/ -q"
+            )
+            print("✅ AutoSpec ExperimentLoop initialized")
+        else:
+            self.experiment_loop = None
         
         # Handle shutdown signals
         signal.signal(signal.SIGINT, self._shutdown)
@@ -148,6 +168,10 @@ class ContinuousLoop:
                 print(content)
             print("-" * 70)
             
+            # AutoSpec: Check if response contains H/T/M/B experiment
+            if self.experiment_loop and content:
+                self._run_autospec_experiment(content, prompt['id'])
+            
             # Mark as completed
             self.aipm.ctrm.complete(
                 prompt['id'],
@@ -192,6 +216,41 @@ class ContinuousLoop:
                     context_parts.append(f"Location: {project.path}")
         
         return "\n".join(context_parts)
+    
+    def _run_autospec_experiment(self, content: str, prompt_id: str):
+        """Extract hypothesis and run experiment via AutoSpec."""
+        # Simple parsing for H/T/M/B
+        lines = content.split('\n')
+        h, t, m, b = "", "", "", ""
+        for line in lines:
+            line = line.strip(' │\t')
+            if line.startswith('H:'): h = line[2:].strip()
+            elif line.startswith('T:'): t = line[2:].strip()
+            elif line.startswith('M:'): m = line[2:].strip()
+            elif line.startswith('B:'): b = line[2:].strip()
+        
+        if h and t:
+            # Find code block
+            code_match = re.search(r'```python\n(.*?)```', content, re.DOTALL)
+            if not code_match:
+                code_match = re.search(r'```(?:\w+)?\n(.*?)```', content, re.DOTALL)
+                
+            code_changes = {t: code_match.group(1).strip()} if code_match else {}
+            
+            # Hypothesis from autospec
+            hyp = Hypothesis(
+                task_id=prompt_id,
+                description=h,
+                expected_improvement=0.1,
+                code_changes=code_changes
+            )
+            
+            print(f"\n🚀 Running AutoSpec Experiment: {h}")
+            exp_result = self.experiment_loop.run(hyp)
+            print(f"📊 AutoSpec Result: {exp_result.status.value} (Metric: {exp_result.metric})")
+            
+            return exp_result
+        return None
     
     def update_dashboard(self):
         """Update the ASCII dashboard"""
