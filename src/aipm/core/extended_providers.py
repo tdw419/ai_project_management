@@ -116,8 +116,8 @@ class ZAIProvider:
 class PiAgentConfig:
     """Configuration for Pi Agent"""
     repo_path: Path
-    coding_agent: str = "coding-agent"
-    default_model: str = "qwen2.5-coder-7b-instruct"
+    coding_agent: str = "pi"  # Use 'pi' CLI directly
+    default_model: str = "zai/glm-5"  # User's preferred model
 
 
 class PiAgentProvider:
@@ -150,22 +150,17 @@ class PiAgentProvider:
         start_time = datetime.now()
         
         try:
-            # Build the command
+            # Build the command - use 'pi' CLI directly
             cmd = [
-                "python3",
-                "-m",
-                "pi_agent.coding_agent",
-                "--task", task,
+                "pi",
                 "--model", model or self.config.default_model,
             ]
             
-            if sandbox:
-                cmd.append("--sandbox")
-            
-            # Run the coding agent
+            # Run the pi agent with task as input
             result = subprocess.run(
                 cmd,
                 cwd=str(self.repo_path),
+                input=task,
                 capture_output=True,
                 text=True,
                 timeout=300,  # 5 minute timeout

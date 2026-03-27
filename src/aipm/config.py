@@ -24,6 +24,7 @@ DEFAULT_VISION_MODEL = "qwen/qwen3-vl-8b"
 DEFAULT_REASONING_MODEL = "qwen2.5-coder-7b-instruct"
 DEFAULT_CODE_MODEL = "qwen2.5-coder-7b-instruct"
 DEFAULT_CHAT_MODEL = "qwen/qwen3.5-9b"
+DEFAULT_PI_MODEL = "zai/glm-5"  # Pi agent default
 
 # Project-specific model overrides
 PROJECT_MODELS = {

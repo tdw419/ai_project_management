@@ -8,3 +8,999 @@
 [2026-03-26 20:20:02] 📊 Adding periodic self-improvement prompt
 [2026-03-26 20:20:02] Report saved to: /home/jericho/zion/projects/ai_project_management/aipm/logs/oversight_report.json
 [2026-03-26 20:20:02] ======================================================================
+[2026-03-26 20:30:01] ======================================================================
+[2026-03-26 20:30:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-26 20:30:01] ======================================================================
+[2026-03-26 20:30:01] Queue: 2429 pending, 47 completed
+[2026-03-26 20:30:01] Activity: 39 prompts completed in last hour
+[2026-03-26 20:30:01] Projects: 6 active
+[2026-03-26 20:30:01] ✅ Loop running (PID: 2635324)
+[2026-03-26 20:30:01] Report saved to: /home/jericho/zion/projects/ai_project_management/aipm/logs/oversight_report.json
+[2026-03-26 20:30:01] ======================================================================
+[2026-03-26 20:40:01] ======================================================================
+[2026-03-26 20:40:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-26 20:40:01] ======================================================================
+[2026-03-26 20:40:01] Queue: 2429 pending, 62 completed
+[2026-03-26 20:40:01] Activity: 54 prompts completed in last hour
+[2026-03-26 20:40:01] Projects: 8 active
+[2026-03-26 20:40:01] ✅ Loop running (PID: 2635324)
+[2026-03-26 20:40:01] Report saved to: /home/jericho/zion/projects/ai_project_management/aipm/logs/oversight_report.json
+[2026-03-26 20:40:01] ======================================================================
+[2026-03-26 20:50:01] ======================================================================
+[2026-03-26 20:50:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-26 20:50:01] ======================================================================
+[2026-03-26 20:50:01] Queue: 2413 pending, 77 completed
+[2026-03-26 20:50:01] Activity: 69 prompts completed in last hour
+[2026-03-26 20:50:01] Projects: 8 active
+[2026-03-26 20:50:01] ✅ Loop running (PID: 2635324)
+[2026-03-26 20:50:01] Report saved to: /home/jericho/zion/projects/ai_project_management/aipm/logs/oversight_report.json
+[2026-03-26 20:50:01] ======================================================================
+[2026-03-26 21:00:01] ======================================================================
+[2026-03-26 21:00:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-26 21:00:01] ======================================================================
+[2026-03-26 21:00:01] Queue: 2398 pending, 93 completed
+[2026-03-26 21:00:01] Activity: 78 prompts completed in last hour
+[2026-03-26 21:00:01] Projects: 8 active
+[2026-03-26 21:00:01] ✅ Loop running (PID: 2635324)
+[2026-03-26 21:00:01] Report saved to: /home/jericho/zion/projects/ai_project_management/aipm/logs/oversight_report.json
+[2026-03-26 21:00:01] ======================================================================
+[2026-03-26 21:10:01] ======================================================================
+[2026-03-26 21:10:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-26 21:10:01] ======================================================================
+[2026-03-26 21:10:01] Queue: 2382 pending, 109 completed
+[2026-03-26 21:10:01] Activity: 82 prompts completed in last hour
+[2026-03-26 21:10:01] Projects: 8 active
+[2026-03-26 21:10:01] ✅ Loop running (PID: 2635324)
+[2026-03-26 21:10:01] Report saved to: /home/jericho/zion/projects/ai_project_management/aipm/logs/oversight_report.json
+[2026-03-26 21:10:01] ======================================================================
+[2026-03-26 21:20:01] ======================================================================
+[2026-03-26 21:20:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-26 21:20:01] ======================================================================
+[2026-03-26 21:20:01] Queue: 2367 pending, 124 completed
+[2026-03-26 21:20:01] Activity: 93 prompts completed in last hour
+[2026-03-26 21:20:01] Projects: 8 active
+[2026-03-26 21:20:01] ✅ Loop running (PID: 2635324)
+[2026-03-26 21:20:01] Report saved to: /home/jericho/zion/projects/ai_project_management/aipm/logs/oversight_report.json
+[2026-03-26 21:20:01] ======================================================================
+[2026-03-26 21:30:01] ======================================================================
+[2026-03-26 21:30:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-26 21:30:01] ======================================================================
+[2026-03-26 21:30:01] Queue: 2351 pending, 140 completed
+[2026-03-26 21:30:01] Activity: 93 prompts completed in last hour
+[2026-03-26 21:30:01] Projects: 8 active
+[2026-03-26 21:30:01] ✅ Loop running (PID: 2635324)
+[2026-03-26 21:30:01] Report saved to: /home/jericho/zion/projects/ai_project_management/aipm/logs/oversight_report.json
+[2026-03-26 21:30:01] ======================================================================
+[2026-03-26 21:40:01] ======================================================================
+[2026-03-26 21:40:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-26 21:40:01] ======================================================================
+[2026-03-26 21:40:01] Queue: 2335 pending, 155 completed
+[2026-03-26 21:40:01] Activity: 93 prompts completed in last hour
+[2026-03-26 21:40:01] Projects: 8 active
+[2026-03-26 21:40:01] ✅ Loop running (PID: 2635324)
+[2026-03-26 21:40:01] Report saved to: /home/jericho/zion/projects/ai_project_management/aipm/logs/oversight_report.json
+[2026-03-26 21:40:01] ======================================================================
+[2026-03-26 21:50:01] ======================================================================
+[2026-03-26 21:50:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-26 21:50:01] ======================================================================
+[2026-03-26 21:50:01] Queue: 2320 pending, 171 completed
+[2026-03-26 21:50:01] Activity: 94 prompts completed in last hour
+[2026-03-26 21:50:01] Projects: 8 active
+[2026-03-26 21:50:01] ✅ Loop running (PID: 2635324)
+[2026-03-26 21:50:01] Report saved to: /home/jericho/zion/projects/ai_project_management/aipm/logs/oversight_report.json
+[2026-03-26 21:50:01] ======================================================================
+[2026-03-26 22:00:02] ======================================================================
+[2026-03-26 22:00:02] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-26 22:00:02] ======================================================================
+[2026-03-26 22:00:02] Queue: 2305 pending, 186 completed
+[2026-03-26 22:00:02] Activity: 93 prompts completed in last hour
+[2026-03-26 22:00:02] Projects: 8 active
+[2026-03-26 22:00:02] ✅ Loop running (PID: 2635324)
+[2026-03-26 22:00:02] Report saved to: /home/jericho/zion/projects/ai_project_management/aipm/logs/oversight_report.json
+[2026-03-26 22:00:02] ======================================================================
+[2026-03-26 22:10:01] ======================================================================
+[2026-03-26 22:10:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-26 22:10:01] ======================================================================
+[2026-03-26 22:10:01] Queue: 2289 pending, 202 completed
+[2026-03-26 22:10:01] Activity: 93 prompts completed in last hour
+[2026-03-26 22:10:01] Projects: 8 active
+[2026-03-26 22:10:01] ✅ Loop running (PID: 2635324)
+[2026-03-26 22:10:01] Report saved to: /home/jericho/zion/projects/ai_project_management/aipm/logs/oversight_report.json
+[2026-03-26 22:10:01] ======================================================================
+[2026-03-26 22:20:01] ======================================================================
+[2026-03-26 22:20:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-26 22:20:01] ======================================================================
+[2026-03-26 22:20:01] Queue: 2273 pending, 218 completed
+[2026-03-26 22:20:01] Activity: 94 prompts completed in last hour
+[2026-03-26 22:20:01] Projects: 8 active
+[2026-03-26 22:20:01] ✅ Loop running (PID: 2635324)
+[2026-03-26 22:20:01] Report saved to: /home/jericho/zion/projects/ai_project_management/aipm/logs/oversight_report.json
+[2026-03-26 22:20:01] ======================================================================
+[2026-03-26 22:30:01] ======================================================================
+[2026-03-26 22:30:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-26 22:30:01] ======================================================================
+[2026-03-26 22:30:01] Queue: 2258 pending, 233 completed
+[2026-03-26 22:30:01] Activity: 93 prompts completed in last hour
+[2026-03-26 22:30:01] Projects: 8 active
+[2026-03-26 22:30:01] ✅ Loop running (PID: 2635324)
+[2026-03-26 22:30:01] Report saved to: /home/jericho/zion/projects/ai_project_management/aipm/logs/oversight_report.json
+[2026-03-26 22:30:01] ======================================================================
+[2026-03-26 22:40:01] ======================================================================
+[2026-03-26 22:40:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-26 22:40:01] ======================================================================
+[2026-03-26 22:40:01] Queue: 2242 pending, 248 completed
+[2026-03-26 22:40:01] Activity: 93 prompts completed in last hour
+[2026-03-26 22:40:01] Projects: 8 active
+[2026-03-26 22:40:01] ✅ Loop running (PID: 2635324)
+[2026-03-26 22:40:01] Report saved to: /home/jericho/zion/projects/ai_project_management/aipm/logs/oversight_report.json
+[2026-03-26 22:40:01] ======================================================================
+[2026-03-26 22:50:01] ======================================================================
+[2026-03-26 22:50:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-26 22:50:01] ======================================================================
+[2026-03-26 22:50:01] Queue: 2227 pending, 264 completed
+[2026-03-26 22:50:01] Activity: 93 prompts completed in last hour
+[2026-03-26 22:50:01] Projects: 8 active
+[2026-03-26 22:50:01] ✅ Loop running (PID: 2635324)
+[2026-03-26 22:50:01] Report saved to: /home/jericho/zion/projects/ai_project_management/aipm/logs/oversight_report.json
+[2026-03-26 22:50:01] ======================================================================
+[2026-03-26 23:00:01] ======================================================================
+[2026-03-26 23:00:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-26 23:00:01] ======================================================================
+[2026-03-26 23:00:01] Queue: 2211 pending, 280 completed
+[2026-03-26 23:00:01] Activity: 94 prompts completed in last hour
+[2026-03-26 23:00:01] Projects: 8 active
+[2026-03-26 23:00:01] ✅ Loop running (PID: 2635324)
+[2026-03-26 23:00:01] Report saved to: /home/jericho/zion/projects/ai_project_management/aipm/logs/oversight_report.json
+[2026-03-26 23:00:01] ======================================================================
+[2026-03-26 23:10:01] ======================================================================
+[2026-03-26 23:10:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-26 23:10:01] ======================================================================
+[2026-03-26 23:10:01] Queue: 2195 pending, 296 completed
+[2026-03-26 23:10:01] Activity: 94 prompts completed in last hour
+[2026-03-26 23:10:01] Projects: 8 active
+[2026-03-26 23:10:01] ✅ Loop running (PID: 2635324)
+[2026-03-26 23:10:01] Report saved to: /home/jericho/zion/projects/ai_project_management/aipm/logs/oversight_report.json
+[2026-03-26 23:10:01] ======================================================================
+[2026-03-26 23:20:01] ======================================================================
+[2026-03-26 23:20:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-26 23:20:01] ======================================================================
+[2026-03-26 23:20:01] Queue: 2179 pending, 312 completed
+[2026-03-26 23:20:01] Activity: 94 prompts completed in last hour
+[2026-03-26 23:20:01] Projects: 8 active
+[2026-03-26 23:20:01] ✅ Loop running (PID: 2635324)
+[2026-03-26 23:20:01] Report saved to: /home/jericho/zion/projects/ai_project_management/aipm/logs/oversight_report.json
+[2026-03-26 23:20:01] ======================================================================
+[2026-03-26 23:30:01] ======================================================================
+[2026-03-26 23:30:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-26 23:30:01] ======================================================================
+[2026-03-26 23:30:01] Queue: 2163 pending, 328 completed
+[2026-03-26 23:30:01] Activity: 95 prompts completed in last hour
+[2026-03-26 23:30:01] Projects: 8 active
+[2026-03-26 23:30:01] ✅ Loop running (PID: 2635324)
+[2026-03-26 23:30:01] Report saved to: /home/jericho/zion/projects/ai_project_management/aipm/logs/oversight_report.json
+[2026-03-26 23:30:01] ======================================================================
+[2026-03-26 23:40:02] ======================================================================
+[2026-03-26 23:40:02] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-26 23:40:02] ======================================================================
+[2026-03-26 23:40:02] Queue: 2148 pending, 343 completed
+[2026-03-26 23:40:02] Activity: 95 prompts completed in last hour
+[2026-03-26 23:40:02] Projects: 8 active
+[2026-03-26 23:40:02] ✅ Loop running (PID: 2635324)
+[2026-03-26 23:40:02] Report saved to: /home/jericho/zion/projects/ai_project_management/aipm/logs/oversight_report.json
+[2026-03-26 23:40:02] ======================================================================
+[2026-03-26 23:50:01] ======================================================================
+[2026-03-26 23:50:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-26 23:50:01] ======================================================================
+[2026-03-26 23:50:01] Queue: 2132 pending, 359 completed
+[2026-03-26 23:50:01] Activity: 95 prompts completed in last hour
+[2026-03-26 23:50:01] Projects: 8 active
+[2026-03-26 23:50:01] ✅ Loop running (PID: 2635324)
+[2026-03-26 23:50:01] Report saved to: /home/jericho/zion/projects/ai_project_management/aipm/logs/oversight_report.json
+[2026-03-26 23:50:01] ======================================================================
+[2026-03-27 00:00:01] ======================================================================
+[2026-03-27 00:00:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-27 00:00:01] ======================================================================
+[2026-03-27 00:00:01] Queue: 2116 pending, 375 completed
+[2026-03-27 00:00:01] Activity: 95 prompts completed in last hour
+[2026-03-27 00:00:01] Projects: 8 active
+[2026-03-27 00:00:01] ✅ Loop running (PID: 2635324)
+[2026-03-27 00:00:01] Report saved to: /home/jericho/zion/projects/ai_project_management/aipm/logs/oversight_report.json
+[2026-03-27 00:00:01] ======================================================================
+[2026-03-27 00:10:01] ======================================================================
+[2026-03-27 00:10:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-27 00:10:01] ======================================================================
+[2026-03-27 00:10:01] Queue: 2100 pending, 391 completed
+[2026-03-27 00:10:01] Activity: 95 prompts completed in last hour
+[2026-03-27 00:10:01] Projects: 8 active
+[2026-03-27 00:10:01] ✅ Loop running (PID: 2635324)
+[2026-03-27 00:10:01] Report saved to: /home/jericho/zion/projects/ai_project_management/aipm/logs/oversight_report.json
+[2026-03-27 00:10:01] ======================================================================
+[2026-03-27 00:20:01] ======================================================================
+[2026-03-27 00:20:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-27 00:20:01] ======================================================================
+[2026-03-27 00:20:01] Queue: 2085 pending, 406 completed
+[2026-03-27 00:20:01] Activity: 94 prompts completed in last hour
+[2026-03-27 00:20:01] Projects: 8 active
+[2026-03-27 00:20:01] ✅ Loop running (PID: 2635324)
+[2026-03-27 00:20:01] Report saved to: /home/jericho/zion/projects/ai_project_management/aipm/logs/oversight_report.json
+[2026-03-27 00:20:01] ======================================================================
+[2026-03-27 00:30:01] ======================================================================
+[2026-03-27 00:30:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-27 00:30:01] ======================================================================
+[2026-03-27 00:30:01] Queue: 2069 pending, 422 completed
+[2026-03-27 00:30:01] Activity: 94 prompts completed in last hour
+[2026-03-27 00:30:01] Projects: 8 active
+[2026-03-27 00:30:01] ✅ Loop running (PID: 2635324)
+[2026-03-27 00:30:01] Report saved to: /home/jericho/zion/projects/ai_project_management/aipm/logs/oversight_report.json
+[2026-03-27 00:30:01] ======================================================================
+[2026-03-27 00:40:01] ======================================================================
+[2026-03-27 00:40:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-27 00:40:01] ======================================================================
+[2026-03-27 00:40:01] Queue: 2053 pending, 438 completed
+[2026-03-27 00:40:01] Activity: 95 prompts completed in last hour
+[2026-03-27 00:40:01] Projects: 8 active
+[2026-03-27 00:40:01] ✅ Loop running (PID: 2635324)
+[2026-03-27 00:40:01] Report saved to: /home/jericho/zion/projects/ai_project_management/aipm/logs/oversight_report.json
+[2026-03-27 00:40:01] ======================================================================
+[2026-03-27 00:50:01] ======================================================================
+[2026-03-27 00:50:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-27 00:50:01] ======================================================================
+[2026-03-27 00:50:01] Queue: 2037 pending, 454 completed
+[2026-03-27 00:50:01] Activity: 95 prompts completed in last hour
+[2026-03-27 00:50:01] Projects: 8 active
+[2026-03-27 00:50:01] ✅ Loop running (PID: 2635324)
+[2026-03-27 00:50:01] Report saved to: /home/jericho/zion/projects/ai_project_management/aipm/logs/oversight_report.json
+[2026-03-27 00:50:01] ======================================================================
+[2026-03-27 01:00:01] ======================================================================
+[2026-03-27 01:00:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-27 01:00:01] ======================================================================
+[2026-03-27 01:00:01] Queue: 2021 pending, 470 completed
+[2026-03-27 01:00:01] Activity: 95 prompts completed in last hour
+[2026-03-27 01:00:01] Projects: 8 active
+[2026-03-27 01:00:01] ✅ Loop running (PID: 2635324)
+[2026-03-27 01:00:01] Report saved to: /home/jericho/zion/projects/ai_project_management/aipm/logs/oversight_report.json
+[2026-03-27 01:00:01] ======================================================================
+[2026-03-27 01:10:01] ======================================================================
+[2026-03-27 01:10:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-27 01:10:01] ======================================================================
+[2026-03-27 01:10:01] Queue: 2006 pending, 485 completed
+[2026-03-27 01:10:01] Activity: 94 prompts completed in last hour
+[2026-03-27 01:10:01] Projects: 8 active
+[2026-03-27 01:10:01] ✅ Loop running (PID: 2635324)
+[2026-03-27 01:10:01] Report saved to: /home/jericho/zion/projects/ai_project_management/aipm/logs/oversight_report.json
+[2026-03-27 01:10:01] ======================================================================
+[2026-03-27 01:20:02] ======================================================================
+[2026-03-27 01:20:02] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-27 01:20:02] ======================================================================
+[2026-03-27 01:20:02] Queue: 1991 pending, 500 completed
+[2026-03-27 01:20:02] Activity: 94 prompts completed in last hour
+[2026-03-27 01:20:02] Projects: 8 active
+[2026-03-27 01:20:02] ✅ Loop running (PID: 2635324)
+[2026-03-27 01:20:02] Report saved to: /home/jericho/zion/projects/ai_project_management/aipm/logs/oversight_report.json
+[2026-03-27 01:20:02] ======================================================================
+[2026-03-27 01:30:01] ======================================================================
+[2026-03-27 01:30:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-27 01:30:01] ======================================================================
+[2026-03-27 01:30:01] Queue: 1975 pending, 516 completed
+[2026-03-27 01:30:01] Activity: 94 prompts completed in last hour
+[2026-03-27 01:30:01] Projects: 8 active
+[2026-03-27 01:30:01] ✅ Loop running (PID: 2635324)
+[2026-03-27 01:30:01] Report saved to: /home/jericho/zion/projects/ai_project_management/aipm/logs/oversight_report.json
+[2026-03-27 01:30:01] ======================================================================
+[2026-03-27 01:40:01] ======================================================================
+[2026-03-27 01:40:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-27 01:40:01] ======================================================================
+[2026-03-27 01:40:01] Queue: 1960 pending, 531 completed
+[2026-03-27 01:40:01] Activity: 93 prompts completed in last hour
+[2026-03-27 01:40:01] Projects: 8 active
+[2026-03-27 01:40:01] ✅ Loop running (PID: 2635324)
+[2026-03-27 01:40:01] Report saved to: /home/jericho/zion/projects/ai_project_management/aipm/logs/oversight_report.json
+[2026-03-27 01:40:01] ======================================================================
+[2026-03-27 01:50:01] ======================================================================
+[2026-03-27 01:50:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-27 01:50:01] ======================================================================
+[2026-03-27 01:50:01] Queue: 1944 pending, 547 completed
+[2026-03-27 01:50:01] Activity: 93 prompts completed in last hour
+[2026-03-27 01:50:01] Projects: 8 active
+[2026-03-27 01:50:01] ✅ Loop running (PID: 2635324)
+[2026-03-27 01:50:01] Report saved to: /home/jericho/zion/projects/ai_project_management/aipm/logs/oversight_report.json
+[2026-03-27 01:50:01] ======================================================================
+[2026-03-27 02:00:01] ======================================================================
+[2026-03-27 02:00:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-27 02:00:01] ======================================================================
+[2026-03-27 02:00:01] Queue: 1928 pending, 563 completed
+[2026-03-27 02:00:01] Activity: 93 prompts completed in last hour
+[2026-03-27 02:00:01] Projects: 8 active
+[2026-03-27 02:00:01] ✅ Loop running (PID: 2635324)
+[2026-03-27 02:00:01] Report saved to: /home/jericho/zion/projects/ai_project_management/aipm/logs/oversight_report.json
+[2026-03-27 02:00:01] ======================================================================
+[2026-03-27 02:10:01] ======================================================================
+[2026-03-27 02:10:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-27 02:10:01] ======================================================================
+[2026-03-27 02:10:01] Queue: 11828 pending, 579 completed
+[2026-03-27 02:10:01] Activity: 94 prompts completed in last hour
+[2026-03-27 02:10:01] Projects: 8 active
+[2026-03-27 02:10:01] ✅ Loop running (PID: 2635324)
+[2026-03-27 02:10:01] Report saved to: /home/jericho/zion/projects/ai_project_management/aipm/logs/oversight_report.json
+[2026-03-27 02:10:01] ======================================================================
+[2026-03-27 02:20:01] ======================================================================
+[2026-03-27 02:20:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-27 02:20:01] ======================================================================
+[2026-03-27 02:20:01] Queue: 11813 pending, 594 completed
+[2026-03-27 02:20:01] Activity: 94 prompts completed in last hour
+[2026-03-27 02:20:01] Projects: 8 active
+[2026-03-27 02:20:01] ✅ Loop running (PID: 2635324)
+[2026-03-27 02:20:01] Report saved to: /home/jericho/zion/projects/ai_project_management/aipm/logs/oversight_report.json
+[2026-03-27 02:20:01] ======================================================================
+[2026-03-27 02:30:01] ======================================================================
+[2026-03-27 02:30:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-27 02:30:01] ======================================================================
+[2026-03-27 02:30:01] Queue: 11797 pending, 609 completed
+[2026-03-27 02:30:01] Activity: 93 prompts completed in last hour
+[2026-03-27 02:30:01] Projects: 8 active
+[2026-03-27 02:30:01] ✅ Loop running (PID: 2635324)
+[2026-03-27 02:30:01] 📊 Adding periodic self-improvement prompt
+Traceback (most recent call last):
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 241, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 225, in main
+    prompts_added = add_improvement_prompts(aipm, queue_stats, activity)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 151, in add_improvement_prompts
+    prompt_id = aipm.enqueue(
+                ^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/src/aipm/integration.py", line 174, in enqueue
+    return self.ctrm.enqueue(
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/src/aipm/core/ctrm_prompt_manager.py", line 57, in enqueue
+    conn.execute("""
+sqlite3.IntegrityError: UNIQUE constraint failed: prompt_queue.id
+[2026-03-27 02:40:01] ======================================================================
+[2026-03-27 02:40:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-27 02:40:01] ======================================================================
+[2026-03-27 02:40:01] Queue: 11782 pending, 625 completed
+[2026-03-27 02:40:01] Activity: 94 prompts completed in last hour
+[2026-03-27 02:40:01] Projects: 8 active
+[2026-03-27 02:40:01] ✅ Loop running (PID: 2635324)
+[2026-03-27 02:40:01] 📊 Adding periodic self-improvement prompt
+Traceback (most recent call last):
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 241, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 225, in main
+    prompts_added = add_improvement_prompts(aipm, queue_stats, activity)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 151, in add_improvement_prompts
+    prompt_id = aipm.enqueue(
+                ^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/src/aipm/integration.py", line 174, in enqueue
+    return self.ctrm.enqueue(
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/src/aipm/core/ctrm_prompt_manager.py", line 57, in enqueue
+    conn.execute("""
+sqlite3.IntegrityError: UNIQUE constraint failed: prompt_queue.id
+[2026-03-27 02:50:01] ======================================================================
+[2026-03-27 02:50:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-27 02:50:01] ======================================================================
+[2026-03-27 02:50:01] Queue: 11767 pending, 640 completed
+[2026-03-27 02:50:01] Activity: 93 prompts completed in last hour
+[2026-03-27 02:50:01] Projects: 8 active
+[2026-03-27 02:50:01] ✅ Loop running (PID: 2635324)
+[2026-03-27 02:50:01] 📊 Adding periodic self-improvement prompt
+Traceback (most recent call last):
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 241, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 225, in main
+    prompts_added = add_improvement_prompts(aipm, queue_stats, activity)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 151, in add_improvement_prompts
+    prompt_id = aipm.enqueue(
+                ^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/src/aipm/integration.py", line 174, in enqueue
+    return self.ctrm.enqueue(
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/src/aipm/core/ctrm_prompt_manager.py", line 57, in enqueue
+    conn.execute("""
+sqlite3.IntegrityError: UNIQUE constraint failed: prompt_queue.id
+[2026-03-27 03:00:02] ======================================================================
+[2026-03-27 03:00:02] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-27 03:00:02] ======================================================================
+[2026-03-27 03:00:02] Queue: 11752 pending, 655 completed
+[2026-03-27 03:00:02] Activity: 92 prompts completed in last hour
+[2026-03-27 03:00:02] Projects: 8 active
+[2026-03-27 03:00:02] ✅ Loop running (PID: 2635324)
+[2026-03-27 03:00:02] 📊 Adding periodic self-improvement prompt
+Traceback (most recent call last):
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 241, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 225, in main
+    prompts_added = add_improvement_prompts(aipm, queue_stats, activity)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 151, in add_improvement_prompts
+    prompt_id = aipm.enqueue(
+                ^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/src/aipm/integration.py", line 174, in enqueue
+    return self.ctrm.enqueue(
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/src/aipm/core/ctrm_prompt_manager.py", line 57, in enqueue
+    conn.execute("""
+sqlite3.IntegrityError: UNIQUE constraint failed: prompt_queue.id
+[2026-03-27 03:10:01] ======================================================================
+[2026-03-27 03:10:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-27 03:10:01] ======================================================================
+[2026-03-27 03:10:01] Queue: 11737 pending, 670 completed
+[2026-03-27 03:10:01] Activity: 91 prompts completed in last hour
+[2026-03-27 03:10:01] Projects: 8 active
+[2026-03-27 03:10:01] ✅ Loop running (PID: 2635324)
+[2026-03-27 03:10:01] 📊 Adding periodic self-improvement prompt
+Traceback (most recent call last):
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 241, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 225, in main
+    prompts_added = add_improvement_prompts(aipm, queue_stats, activity)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 151, in add_improvement_prompts
+    prompt_id = aipm.enqueue(
+                ^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/src/aipm/integration.py", line 174, in enqueue
+    return self.ctrm.enqueue(
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/src/aipm/core/ctrm_prompt_manager.py", line 57, in enqueue
+    conn.execute("""
+sqlite3.IntegrityError: UNIQUE constraint failed: prompt_queue.id
+[2026-03-27 03:20:01] ======================================================================
+[2026-03-27 03:20:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-27 03:20:01] ======================================================================
+[2026-03-27 03:20:01] Queue: 11722 pending, 685 completed
+[2026-03-27 03:20:01] Activity: 91 prompts completed in last hour
+[2026-03-27 03:20:01] Projects: 8 active
+[2026-03-27 03:20:01] ✅ Loop running (PID: 2635324)
+[2026-03-27 03:20:01] 📊 Adding periodic self-improvement prompt
+Traceback (most recent call last):
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 241, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 225, in main
+    prompts_added = add_improvement_prompts(aipm, queue_stats, activity)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 151, in add_improvement_prompts
+    prompt_id = aipm.enqueue(
+                ^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/src/aipm/integration.py", line 174, in enqueue
+    return self.ctrm.enqueue(
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/src/aipm/core/ctrm_prompt_manager.py", line 57, in enqueue
+    conn.execute("""
+sqlite3.IntegrityError: UNIQUE constraint failed: prompt_queue.id
+[2026-03-27 03:30:01] ======================================================================
+[2026-03-27 03:30:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-27 03:30:01] ======================================================================
+[2026-03-27 03:30:01] Queue: 11707 pending, 700 completed
+[2026-03-27 03:30:01] Activity: 91 prompts completed in last hour
+[2026-03-27 03:30:01] Projects: 8 active
+[2026-03-27 03:30:01] ✅ Loop running (PID: 2635324)
+[2026-03-27 03:30:01] 📊 Adding periodic self-improvement prompt
+Traceback (most recent call last):
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 241, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 225, in main
+    prompts_added = add_improvement_prompts(aipm, queue_stats, activity)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 151, in add_improvement_prompts
+    prompt_id = aipm.enqueue(
+                ^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/src/aipm/integration.py", line 174, in enqueue
+    return self.ctrm.enqueue(
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/src/aipm/core/ctrm_prompt_manager.py", line 57, in enqueue
+    conn.execute("""
+sqlite3.IntegrityError: UNIQUE constraint failed: prompt_queue.id
+[2026-03-27 03:40:01] ======================================================================
+[2026-03-27 03:40:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-27 03:40:01] ======================================================================
+[2026-03-27 03:40:01] Queue: 11691 pending, 715 completed
+[2026-03-27 03:40:01] Activity: 90 prompts completed in last hour
+[2026-03-27 03:40:01] Projects: 8 active
+[2026-03-27 03:40:01] ✅ Loop running (PID: 2635324)
+[2026-03-27 03:40:01] 📊 Adding periodic self-improvement prompt
+Traceback (most recent call last):
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 241, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 225, in main
+    prompts_added = add_improvement_prompts(aipm, queue_stats, activity)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 151, in add_improvement_prompts
+    prompt_id = aipm.enqueue(
+                ^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/src/aipm/integration.py", line 174, in enqueue
+    return self.ctrm.enqueue(
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/src/aipm/core/ctrm_prompt_manager.py", line 57, in enqueue
+    conn.execute("""
+sqlite3.IntegrityError: UNIQUE constraint failed: prompt_queue.id
+[2026-03-27 03:50:01] ======================================================================
+[2026-03-27 03:50:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-27 03:50:01] ======================================================================
+[2026-03-27 03:50:01] Queue: 11676 pending, 731 completed
+[2026-03-27 03:50:01] Activity: 91 prompts completed in last hour
+[2026-03-27 03:50:01] Projects: 8 active
+[2026-03-27 03:50:01] ✅ Loop running (PID: 2635324)
+[2026-03-27 03:50:01] 📊 Adding periodic self-improvement prompt
+Traceback (most recent call last):
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 241, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 225, in main
+    prompts_added = add_improvement_prompts(aipm, queue_stats, activity)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 151, in add_improvement_prompts
+    prompt_id = aipm.enqueue(
+                ^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/src/aipm/integration.py", line 174, in enqueue
+    return self.ctrm.enqueue(
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/src/aipm/core/ctrm_prompt_manager.py", line 57, in enqueue
+    conn.execute("""
+sqlite3.IntegrityError: UNIQUE constraint failed: prompt_queue.id
+[2026-03-27 04:00:01] ======================================================================
+[2026-03-27 04:00:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-27 04:00:01] ======================================================================
+[2026-03-27 04:00:01] Queue: 11661 pending, 746 completed
+[2026-03-27 04:00:01] Activity: 91 prompts completed in last hour
+[2026-03-27 04:00:01] Projects: 8 active
+[2026-03-27 04:00:01] ✅ Loop running (PID: 2635324)
+[2026-03-27 04:00:01] 📊 Adding periodic self-improvement prompt
+Traceback (most recent call last):
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 241, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 225, in main
+    prompts_added = add_improvement_prompts(aipm, queue_stats, activity)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 151, in add_improvement_prompts
+    prompt_id = aipm.enqueue(
+                ^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/src/aipm/integration.py", line 174, in enqueue
+    return self.ctrm.enqueue(
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/src/aipm/core/ctrm_prompt_manager.py", line 57, in enqueue
+    conn.execute("""
+sqlite3.IntegrityError: UNIQUE constraint failed: prompt_queue.id
+[2026-03-27 04:10:01] ======================================================================
+[2026-03-27 04:10:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-27 04:10:01] ======================================================================
+[2026-03-27 04:10:01] Queue: 11646 pending, 761 completed
+[2026-03-27 04:10:01] Activity: 91 prompts completed in last hour
+[2026-03-27 04:10:01] Projects: 8 active
+[2026-03-27 04:10:01] ✅ Loop running (PID: 2635324)
+[2026-03-27 04:10:01] 📊 Adding periodic self-improvement prompt
+Traceback (most recent call last):
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 241, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 225, in main
+    prompts_added = add_improvement_prompts(aipm, queue_stats, activity)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 151, in add_improvement_prompts
+    prompt_id = aipm.enqueue(
+                ^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/src/aipm/integration.py", line 174, in enqueue
+    return self.ctrm.enqueue(
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/src/aipm/core/ctrm_prompt_manager.py", line 57, in enqueue
+    conn.execute("""
+sqlite3.IntegrityError: UNIQUE constraint failed: prompt_queue.id
+[2026-03-27 04:20:01] ======================================================================
+[2026-03-27 04:20:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-27 04:20:01] ======================================================================
+[2026-03-27 04:20:01] Queue: 11631 pending, 776 completed
+[2026-03-27 04:20:01] Activity: 91 prompts completed in last hour
+[2026-03-27 04:20:01] Projects: 8 active
+[2026-03-27 04:20:01] ✅ Loop running (PID: 2635324)
+[2026-03-27 04:20:01] 📊 Adding periodic self-improvement prompt
+Traceback (most recent call last):
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 241, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 225, in main
+    prompts_added = add_improvement_prompts(aipm, queue_stats, activity)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 151, in add_improvement_prompts
+    prompt_id = aipm.enqueue(
+                ^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/src/aipm/integration.py", line 174, in enqueue
+    return self.ctrm.enqueue(
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/src/aipm/core/ctrm_prompt_manager.py", line 57, in enqueue
+    conn.execute("""
+sqlite3.IntegrityError: UNIQUE constraint failed: prompt_queue.id
+[2026-03-27 04:30:01] ======================================================================
+[2026-03-27 04:30:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-27 04:30:01] ======================================================================
+[2026-03-27 04:30:02] Queue: 11616 pending, 791 completed
+[2026-03-27 04:30:02] Activity: 91 prompts completed in last hour
+[2026-03-27 04:30:02] Projects: 8 active
+[2026-03-27 04:30:02] ✅ Loop running (PID: 2635324)
+[2026-03-27 04:30:02] 📊 Adding periodic self-improvement prompt
+Traceback (most recent call last):
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 241, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 225, in main
+    prompts_added = add_improvement_prompts(aipm, queue_stats, activity)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 151, in add_improvement_prompts
+    prompt_id = aipm.enqueue(
+                ^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/src/aipm/integration.py", line 174, in enqueue
+    return self.ctrm.enqueue(
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/src/aipm/core/ctrm_prompt_manager.py", line 57, in enqueue
+    conn.execute("""
+sqlite3.IntegrityError: UNIQUE constraint failed: prompt_queue.id
+[2026-03-27 04:40:01] ======================================================================
+[2026-03-27 04:40:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-27 04:40:01] ======================================================================
+[2026-03-27 04:40:01] Queue: 11600 pending, 807 completed
+[2026-03-27 04:40:01] Activity: 92 prompts completed in last hour
+[2026-03-27 04:40:01] Projects: 8 active
+[2026-03-27 04:40:01] ✅ Loop running (PID: 2635324)
+[2026-03-27 04:40:01] 📊 Adding periodic self-improvement prompt
+Traceback (most recent call last):
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 241, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 225, in main
+    prompts_added = add_improvement_prompts(aipm, queue_stats, activity)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 151, in add_improvement_prompts
+    prompt_id = aipm.enqueue(
+                ^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/src/aipm/integration.py", line 174, in enqueue
+    return self.ctrm.enqueue(
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/src/aipm/core/ctrm_prompt_manager.py", line 57, in enqueue
+    conn.execute("""
+sqlite3.IntegrityError: UNIQUE constraint failed: prompt_queue.id
+[2026-03-27 04:50:01] ======================================================================
+[2026-03-27 04:50:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-27 04:50:01] ======================================================================
+[2026-03-27 04:50:01] Queue: 11585 pending, 822 completed
+[2026-03-27 04:50:01] Activity: 91 prompts completed in last hour
+[2026-03-27 04:50:01] Projects: 8 active
+[2026-03-27 04:50:01] ✅ Loop running (PID: 2635324)
+[2026-03-27 04:50:01] 📊 Adding periodic self-improvement prompt
+Traceback (most recent call last):
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 241, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 225, in main
+    prompts_added = add_improvement_prompts(aipm, queue_stats, activity)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 151, in add_improvement_prompts
+    prompt_id = aipm.enqueue(
+                ^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/src/aipm/integration.py", line 174, in enqueue
+    return self.ctrm.enqueue(
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/src/aipm/core/ctrm_prompt_manager.py", line 57, in enqueue
+    conn.execute("""
+sqlite3.IntegrityError: UNIQUE constraint failed: prompt_queue.id
+[2026-03-27 05:00:01] ======================================================================
+[2026-03-27 05:00:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-27 05:00:01] ======================================================================
+[2026-03-27 05:00:01] Queue: 11570 pending, 837 completed
+[2026-03-27 05:00:01] Activity: 91 prompts completed in last hour
+[2026-03-27 05:00:01] Projects: 8 active
+[2026-03-27 05:00:01] ✅ Loop running (PID: 2635324)
+[2026-03-27 05:00:01] 📊 Adding periodic self-improvement prompt
+Traceback (most recent call last):
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 241, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 225, in main
+    prompts_added = add_improvement_prompts(aipm, queue_stats, activity)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 151, in add_improvement_prompts
+    prompt_id = aipm.enqueue(
+                ^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/src/aipm/integration.py", line 174, in enqueue
+    return self.ctrm.enqueue(
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/src/aipm/core/ctrm_prompt_manager.py", line 57, in enqueue
+    conn.execute("""
+sqlite3.IntegrityError: UNIQUE constraint failed: prompt_queue.id
+[2026-03-27 05:10:01] ======================================================================
+[2026-03-27 05:10:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-27 05:10:01] ======================================================================
+[2026-03-27 05:10:01] Queue: 11555 pending, 852 completed
+[2026-03-27 05:10:01] Activity: 91 prompts completed in last hour
+[2026-03-27 05:10:01] Projects: 8 active
+[2026-03-27 05:10:01] ✅ Loop running (PID: 2635324)
+[2026-03-27 05:10:01] 📊 Adding periodic self-improvement prompt
+Traceback (most recent call last):
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 241, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 225, in main
+    prompts_added = add_improvement_prompts(aipm, queue_stats, activity)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 151, in add_improvement_prompts
+    prompt_id = aipm.enqueue(
+                ^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/src/aipm/integration.py", line 174, in enqueue
+    return self.ctrm.enqueue(
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/src/aipm/core/ctrm_prompt_manager.py", line 57, in enqueue
+    conn.execute("""
+sqlite3.IntegrityError: UNIQUE constraint failed: prompt_queue.id
+[2026-03-27 05:20:01] ======================================================================
+[2026-03-27 05:20:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-27 05:20:01] ======================================================================
+[2026-03-27 05:20:01] Queue: 11540 pending, 867 completed
+[2026-03-27 05:20:01] Activity: 91 prompts completed in last hour
+[2026-03-27 05:20:01] Projects: 8 active
+[2026-03-27 05:20:01] ✅ Loop running (PID: 2635324)
+[2026-03-27 05:20:01] 📊 Adding periodic self-improvement prompt
+Traceback (most recent call last):
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 241, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 225, in main
+    prompts_added = add_improvement_prompts(aipm, queue_stats, activity)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 151, in add_improvement_prompts
+    prompt_id = aipm.enqueue(
+                ^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/src/aipm/integration.py", line 174, in enqueue
+    return self.ctrm.enqueue(
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/src/aipm/core/ctrm_prompt_manager.py", line 57, in enqueue
+    conn.execute("""
+sqlite3.IntegrityError: UNIQUE constraint failed: prompt_queue.id
+[2026-03-27 05:30:01] ======================================================================
+[2026-03-27 05:30:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-27 05:30:01] ======================================================================
+[2026-03-27 05:30:01] Queue: 11525 pending, 882 completed
+[2026-03-27 05:30:01] Activity: 91 prompts completed in last hour
+[2026-03-27 05:30:01] Projects: 8 active
+[2026-03-27 05:30:01] ✅ Loop running (PID: 2635324)
+[2026-03-27 05:30:01] 📊 Adding periodic self-improvement prompt
+Traceback (most recent call last):
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 241, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 225, in main
+    prompts_added = add_improvement_prompts(aipm, queue_stats, activity)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 151, in add_improvement_prompts
+    prompt_id = aipm.enqueue(
+                ^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/src/aipm/integration.py", line 174, in enqueue
+    return self.ctrm.enqueue(
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/src/aipm/core/ctrm_prompt_manager.py", line 57, in enqueue
+    conn.execute("""
+sqlite3.IntegrityError: UNIQUE constraint failed: prompt_queue.id
+[2026-03-27 05:40:01] ======================================================================
+[2026-03-27 05:40:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-27 05:40:01] ======================================================================
+[2026-03-27 05:40:01] Queue: 11509 pending, 897 completed
+[2026-03-27 05:40:01] Activity: 90 prompts completed in last hour
+[2026-03-27 05:40:01] Projects: 8 active
+[2026-03-27 05:40:01] ✅ Loop running (PID: 2635324)
+[2026-03-27 05:40:01] 📊 Adding periodic self-improvement prompt
+Traceback (most recent call last):
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 241, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 225, in main
+    prompts_added = add_improvement_prompts(aipm, queue_stats, activity)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 151, in add_improvement_prompts
+    prompt_id = aipm.enqueue(
+                ^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/src/aipm/integration.py", line 174, in enqueue
+    return self.ctrm.enqueue(
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/src/aipm/core/ctrm_prompt_manager.py", line 57, in enqueue
+    conn.execute("""
+sqlite3.IntegrityError: UNIQUE constraint failed: prompt_queue.id
+[2026-03-27 05:50:01] ======================================================================
+[2026-03-27 05:50:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-27 05:50:01] ======================================================================
+[2026-03-27 05:50:01] Queue: 11494 pending, 913 completed
+[2026-03-27 05:50:01] Activity: 91 prompts completed in last hour
+[2026-03-27 05:50:01] Projects: 8 active
+[2026-03-27 05:50:01] ✅ Loop running (PID: 2635324)
+[2026-03-27 05:50:01] 📊 Adding periodic self-improvement prompt
+Traceback (most recent call last):
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 241, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 225, in main
+    prompts_added = add_improvement_prompts(aipm, queue_stats, activity)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 151, in add_improvement_prompts
+    prompt_id = aipm.enqueue(
+                ^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/src/aipm/integration.py", line 174, in enqueue
+    return self.ctrm.enqueue(
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/src/aipm/core/ctrm_prompt_manager.py", line 57, in enqueue
+    conn.execute("""
+sqlite3.IntegrityError: UNIQUE constraint failed: prompt_queue.id
+[2026-03-27 06:00:01] ======================================================================
+[2026-03-27 06:00:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-27 06:00:01] ======================================================================
+[2026-03-27 06:00:01] Queue: 11479 pending, 928 completed
+[2026-03-27 06:00:01] Activity: 91 prompts completed in last hour
+[2026-03-27 06:00:01] Projects: 8 active
+[2026-03-27 06:00:01] ✅ Loop running (PID: 2635324)
+[2026-03-27 06:00:02] 📊 Adding periodic self-improvement prompt
+Traceback (most recent call last):
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 241, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 225, in main
+    prompts_added = add_improvement_prompts(aipm, queue_stats, activity)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 151, in add_improvement_prompts
+    prompt_id = aipm.enqueue(
+                ^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/src/aipm/integration.py", line 174, in enqueue
+    return self.ctrm.enqueue(
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/src/aipm/core/ctrm_prompt_manager.py", line 57, in enqueue
+    conn.execute("""
+sqlite3.IntegrityError: UNIQUE constraint failed: prompt_queue.id
+[2026-03-27 06:10:01] ======================================================================
+[2026-03-27 06:10:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-27 06:10:01] ======================================================================
+[2026-03-27 06:10:01] Queue: 11464 pending, 943 completed
+[2026-03-27 06:10:01] Activity: 91 prompts completed in last hour
+[2026-03-27 06:10:01] Projects: 8 active
+[2026-03-27 06:10:01] ✅ Loop running (PID: 2635324)
+[2026-03-27 06:10:01] 📊 Adding periodic self-improvement prompt
+Traceback (most recent call last):
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 241, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 225, in main
+    prompts_added = add_improvement_prompts(aipm, queue_stats, activity)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 151, in add_improvement_prompts
+    prompt_id = aipm.enqueue(
+                ^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/src/aipm/integration.py", line 174, in enqueue
+    return self.ctrm.enqueue(
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/src/aipm/core/ctrm_prompt_manager.py", line 57, in enqueue
+    conn.execute("""
+sqlite3.IntegrityError: UNIQUE constraint failed: prompt_queue.id
+[2026-03-27 06:20:01] ======================================================================
+[2026-03-27 06:20:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-27 06:20:01] ======================================================================
+[2026-03-27 06:20:01] Queue: 11448 pending, 958 completed
+[2026-03-27 06:20:01] Activity: 91 prompts completed in last hour
+[2026-03-27 06:20:01] Projects: 8 active
+[2026-03-27 06:20:01] ✅ Loop running (PID: 2635324)
+[2026-03-27 06:20:01] 📊 Adding periodic self-improvement prompt
+Traceback (most recent call last):
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 241, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 225, in main
+    prompts_added = add_improvement_prompts(aipm, queue_stats, activity)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 151, in add_improvement_prompts
+    prompt_id = aipm.enqueue(
+                ^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/src/aipm/integration.py", line 174, in enqueue
+    return self.ctrm.enqueue(
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/src/aipm/core/ctrm_prompt_manager.py", line 57, in enqueue
+    conn.execute("""
+sqlite3.IntegrityError: UNIQUE constraint failed: prompt_queue.id
+[2026-03-27 06:30:01] ======================================================================
+[2026-03-27 06:30:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-27 06:30:01] ======================================================================
+[2026-03-27 06:30:01] Queue: 11433 pending, 974 completed
+[2026-03-27 06:30:01] Activity: 92 prompts completed in last hour
+[2026-03-27 06:30:01] Projects: 8 active
+[2026-03-27 06:30:01] ✅ Loop running (PID: 2635324)
+[2026-03-27 06:30:01] 📊 Adding periodic self-improvement prompt
+Traceback (most recent call last):
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 241, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 225, in main
+    prompts_added = add_improvement_prompts(aipm, queue_stats, activity)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 151, in add_improvement_prompts
+    prompt_id = aipm.enqueue(
+                ^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/src/aipm/integration.py", line 174, in enqueue
+    return self.ctrm.enqueue(
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/src/aipm/core/ctrm_prompt_manager.py", line 57, in enqueue
+    conn.execute("""
+sqlite3.IntegrityError: UNIQUE constraint failed: prompt_queue.id
+[2026-03-27 06:40:01] ======================================================================
+[2026-03-27 06:40:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-27 06:40:01] ======================================================================
+[2026-03-27 06:40:01] Queue: 11418 pending, 989 completed
+[2026-03-27 06:40:01] Activity: 92 prompts completed in last hour
+[2026-03-27 06:40:01] Projects: 8 active
+[2026-03-27 06:40:01] ✅ Loop running (PID: 2635324)
+[2026-03-27 06:40:01] 📊 Adding periodic self-improvement prompt
+Traceback (most recent call last):
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 241, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 225, in main
+    prompts_added = add_improvement_prompts(aipm, queue_stats, activity)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 151, in add_improvement_prompts
+    prompt_id = aipm.enqueue(
+                ^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/src/aipm/integration.py", line 174, in enqueue
+    return self.ctrm.enqueue(
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/src/aipm/core/ctrm_prompt_manager.py", line 57, in enqueue
+    conn.execute("""
+sqlite3.IntegrityError: UNIQUE constraint failed: prompt_queue.id
+[2026-03-27 06:50:01] ======================================================================
+[2026-03-27 06:50:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-27 06:50:01] ======================================================================
+[2026-03-27 06:50:01] Queue: 11405 pending, 1002 completed
+[2026-03-27 06:50:01] Activity: 90 prompts completed in last hour
+[2026-03-27 06:50:01] Projects: 8 active
+[2026-03-27 06:50:01] ✅ Loop running (PID: 3357097)
+[2026-03-27 06:50:01] 📊 Adding periodic self-improvement prompt
+Traceback (most recent call last):
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 241, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 225, in main
+    prompts_added = add_improvement_prompts(aipm, queue_stats, activity)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 151, in add_improvement_prompts
+    prompt_id = aipm.enqueue(
+                ^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/src/aipm/integration.py", line 174, in enqueue
+    return self.ctrm.enqueue(
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/src/aipm/core/ctrm_prompt_manager.py", line 57, in enqueue
+    conn.execute("""
+sqlite3.IntegrityError: UNIQUE constraint failed: prompt_queue.id
+[2026-03-27 07:00:01] ======================================================================
+[2026-03-27 07:00:01] OpenClaw TUI Monitor - Starting oversight check
+[2026-03-27 07:00:01] ======================================================================
+[2026-03-27 07:00:01] Queue: 11396 pending, 1011 completed
+[2026-03-27 07:00:01] Activity: 83 prompts completed in last hour
+[2026-03-27 07:00:01] Projects: 8 active
+[2026-03-27 07:00:01] ✅ Loop running (PID: 3367753)
+[2026-03-27 07:00:01] 📊 Adding periodic self-improvement prompt
+Traceback (most recent call last):
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 241, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 225, in main
+    prompts_added = add_improvement_prompts(aipm, queue_stats, activity)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/oversight_monitor.py", line 151, in add_improvement_prompts
+    prompt_id = aipm.enqueue(
+                ^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/src/aipm/integration.py", line 174, in enqueue
+    return self.ctrm.enqueue(
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/jericho/zion/projects/ai_project_management/aipm/src/aipm/core/ctrm_prompt_manager.py", line 57, in enqueue
+    conn.execute("""
+sqlite3.IntegrityError: UNIQUE constraint failed: prompt_queue.id

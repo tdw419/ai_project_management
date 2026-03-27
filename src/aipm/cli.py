@@ -457,5 +457,9 @@ def loop_status():
         console.print("[cyan]Start with: aipm loop start[/cyan]")
 
 
+# Import and add ingest commands
+from aipm.cli_ingest import ingest
+main.add_command(ingest, name='ingest')
+
 if __name__ == "__main__":
     main()

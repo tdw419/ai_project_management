@@ -1,18 +1,39 @@
 {
-  "timestamp": "2026-03-26T20:20:16.630415",
+  "timestamp": "2026-03-27T02:20:01.642923",
   "loop": {
     "running": true,
     "pid": 2635324
   },
   "queue": {
-    "pending": 2438,
+    "pending": 11813,
     "processing": 7,
-    "completed": 32
+    "completed": 594
   },
   "activity": {
-    "completed_last_hour": 25
+    "completed_last_hour": 94
   },
   "projects": [
+    {
+      "name": "ASCII World GPU",
+      "id": "proj_722818dc",
+      "tasks_total": 0,
+      "tasks_completed": 0,
+      "completion": 0
+    },
+    {
+      "name": "GPU Neural World",
+      "id": "proj_dc0c5c01",
+      "tasks_total": 4,
+      "tasks_completed": 0,
+      "completion": 0.0
+    },
+    {
+      "name": "Universal Code Ingestor",
+      "id": "proj_9612f5cf",
+      "tasks_total": 6,
+      "tasks_completed": 0,
+      "completion": 0.0
+    },
     {
       "name": "AIPM Self-Improvement",
       "id": "proj_1cd5e0d1",
