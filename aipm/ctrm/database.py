@@ -24,6 +24,7 @@ class TruthCategory(str, Enum):
     DECISION = "decision"
     PROMPT = "prompt"
     RESULT = "result"
+    WORLD_MODEL = "world_model"  # RAG-based codebase context (Phase 1.1)
 
 
 @dataclass

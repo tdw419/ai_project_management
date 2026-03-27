@@ -30,6 +30,13 @@ from aipm.core.simple_bridge import SimpleQueueBridge
 from aipm.core.extended_providers import PiAgentProvider, PiAgentConfig
 from aipm.config import DEFAULT_REASONING_MODEL, DEFAULT_VISION_MODEL, DEFAULT_PI_MODEL
 
+# RAG World Model for grounded context (Phase 1.1)
+try:
+    from aipm.rag_context import RAGWorldModel
+    HAS_RAG = True
+except ImportError:
+    HAS_RAG = False
+
 # Add AutoSpec integration (vendored)
 try:
     from autospec.autoresearch.loop import ExperimentLoop, Hypothesis
@@ -82,6 +89,13 @@ class ContinuousLoop:
             print("✅ AutoSpec ExperimentLoop initialized")
         else:
             self.experiment_loop = None
+        
+        # RAG World Model for context injection (Phase 1.1)
+        if HAS_RAG:
+            self.rag = RAGWorldModel(Path(__file__).parent, self.aipm.ctrm)
+            print("✅ RAG World Model initialized")
+        else:
+            self.rag = None
         
         # Handle shutdown signals
         signal.signal(signal.SIGINT, self._shutdown)
@@ -226,6 +240,15 @@ class ContinuousLoop:
             "Provide detailed, actionable responses with code examples when appropriate.",
             "Focus on practical implementation details.",
         ]
+        
+        # Add RAG World Model context (Phase 1.1)
+        if self.rag:
+            try:
+                world_context = self.rag.get_context_for_prompt(max_age_hours=24)
+                if world_context:
+                    context_parts.append("\n" + world_context)
+            except Exception as e:
+                pass  # Silently ignore RAG errors
         
         # Add project context if available
         metadata = prompt.get('metadata', {}) or {}
