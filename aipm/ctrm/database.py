@@ -35,6 +35,7 @@ class Truth:
     category: TruthCategory
     confidence: float = 0.5
     source: str = "unknown"
+    subject: str = ""  # What this truth is about
     created_at: datetime = field(default_factory=datetime.now)
     updated_at: datetime = field(default_factory=datetime.now)
     metadata: Dict[str, Any] = field(default_factory=dict)
@@ -104,22 +105,35 @@ class CTRMDatabase:
     def add(self, truth: Truth) -> None:
         """Add a truth to the database"""
         with sqlite3.connect(self.db_path) as conn:
+            # Map Truth dataclass to actual DB schema
+            # content -> claim, source -> agent
             conn.execute("""
                 INSERT OR REPLACE INTO truths (
-                    id, content, category, confidence, source,
-                    created_at, updated_at, metadata, tags
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    id, agent, subject, claim, category, confidence,
+                    distance_from_center, requires_verification, timestamp,
+                    derives_from, reason, immutable, importance,
+                    verification_count, failure_count, metadata, tags
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 truth.id,
-                truth.content,
-                truth.category.value,
+                getattr(truth, 'source', 'unknown'),  # agent
+                getattr(truth, 'subject', truth.id),  # subject (use id as default)
+                truth.content,  # claim
+                truth.category.value if hasattr(truth.category, 'value') else str(truth.category),
                 truth.confidence,
-                truth.source,
-                truth.created_at.isoformat(),
-                truth.updated_at.isoformat(),
-                json.dumps(truth.metadata),
-                json.dumps(truth.tags),
+                getattr(truth, 'distance_from_center', 1),
+                getattr(truth, 'requires_verification', False),
+                datetime.now().isoformat(),
+                None,  # derives_from
+                None,  # reason
+                getattr(truth, 'immutable', False),
+                getattr(truth, 'importance', 0.5),
+                0,  # verification_count
+                0,  # failure_count
+                json.dumps(truth.metadata) if isinstance(truth.metadata, dict) else str(truth.metadata),
+                json.dumps(truth.tags) if isinstance(truth.tags, list) else str(truth.tags),
             ))
+            # FTS is auto-updated by triggers on the truths table
             
             # Update FTS index
             conn.execute("""

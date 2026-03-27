@@ -267,11 +267,12 @@ class RAGWorldModel:
             ).hexdigest()[:12]
             
             truth = Truth(
-                id=f"world_model_{truth_id}",
+                id=f"wm_{truth_id}",
                 content=change.summary,
                 category=TruthCategory.WORLD_MODEL,
                 confidence=0.9,
                 source="rag_world_model",
+                subject=change.file_path,  # What this truth is about
                 tags=["world_model", "git_diff", change.change_type],
                 metadata={
                     "file_path": change.file_path,

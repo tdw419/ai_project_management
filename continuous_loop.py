@@ -37,6 +37,13 @@ try:
 except ImportError:
     HAS_RAG = False
 
+# Roadmap Processor for self-improvement (Ouroboros)
+try:
+    from aipm.roadmap_processor import RoadmapProcessor
+    HAS_ROADMAP = True
+except ImportError:
+    HAS_ROADMAP = False
+
 # Add AutoSpec integration (vendored)
 try:
     from autospec.autoresearch.loop import ExperimentLoop, Hypothesis
@@ -96,6 +103,16 @@ class ContinuousLoop:
             print("✅ RAG World Model initialized")
         else:
             self.rag = None
+        
+        # Roadmap Processor for self-improvement (Ouroboros)
+        if HAS_ROADMAP:
+            roadmap_path = Path(__file__).parent / "docs" / "ROADMAP.md"
+            self.roadmap = RoadmapProcessor(roadmap_path, self.aipm.ctrm)
+            self.roadmap.parse()
+            pending = len(self.roadmap.get_pending_tasks())
+            print(f"✅ Roadmap Processor initialized ({pending} pending tasks)")
+        else:
+            self.roadmap = None
         
         # Handle shutdown signals
         signal.signal(signal.SIGINT, self._shutdown)
@@ -233,6 +250,17 @@ class ContinuousLoop:
             self.error_count += 1
             return False
     
+    def enqueue_roadmap_tasks(self, max_tasks: int = 5, phase_filter: str = None) -> int:
+        """Auto-enqueue roadmap tasks when queue is low"""
+        if not self.roadmap:
+            return 0
+        
+        try:
+            return self.roadmap.enqueue_tasks(phase_filter=phase_filter, max_tasks=max_tasks)
+        except Exception as e:
+            print(f"⚠️  Failed to enqueue roadmap tasks: {e}")
+            return 0
+    
     def _build_context(self, prompt: dict) -> str:
         """Build system context for the prompt"""
         context_parts = [
@@ -355,6 +383,16 @@ class ContinuousLoop:
         if self.project_filter:
             print(f"   Project filter: {self.project_filter}")
         print(f"\n🚀 Starting loop... (Ctrl+C to stop)\n")
+        
+        # Auto-enqueue roadmap tasks on startup (Ouroboros)
+        if self.roadmap:
+            pending = len(self.roadmap.get_pending_tasks())
+            if pending > 0:
+                print(f"📋 Roadmap has {pending} pending tasks")
+                # Enqueue up to 5 high-priority roadmap tasks
+                enqueued = self.enqueue_roadmap_tasks(max_tasks=5, phase_filter="Phase 1")
+                if enqueued > 0:
+                    print(f"✅ Enqueued {enqueued} roadmap tasks for autonomous execution")
         
         # Initial model check (skip if using Pi agent)
         if not self.use_pi and not await self.check_model():
