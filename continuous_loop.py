@@ -86,12 +86,27 @@ class ContinuousLoop:
         
         # Filter by project if specified
         if self.project_filter:
+            # Check multiple ways to match project:
+            # 1. project_id in metadata
+            # 2. Project name in prompt text
+            # 3. Project-related keywords in prompt
+            
             metadata = prompt.get('metadata', {}) or {}
             project_id = metadata.get('project_id', '')
             project = self.aipm.projects.get_project(project_id) if project_id else None
             
-            if not project or self.project_filter.lower() not in project.name.lower():
-                # Put back and skip
+            prompt_text = prompt.get('prompt', '').lower()
+            filter_lower = self.project_filter.lower()
+            
+            # Check if prompt matches project
+            matches_project = (
+                (project and filter_lower in project.name.lower()) or
+                (f"[{filter_lower}]" in prompt_text) or
+                (filter_lower in prompt_text)
+            )
+            
+            if not matches_project:
+                # Not a match - skip this prompt
                 return False
         
         print(f"\n{'='*70}")
