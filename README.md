@@ -159,3 +159,53 @@ AI creates project → SQLite updated → ASCII dashboard → WebSocket → You 
 ## License
 
 MIT
+
+
+## Continuous Processing Loop
+
+### Start the Loop
+
+```bash
+# Foreground (Ctrl+C to stop)
+aipm loop start
+
+# With options
+aipm loop start --interval 30 --project OpenMind
+
+# Background via shell script
+./loop.sh start
+./loop.sh status
+./loop.sh logs
+./loop.sh stop
+```
+
+### Loop Options
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| --interval | 60 | Seconds between prompts |
+| --max | None | Maximum prompts to process |
+| --project | None | Only process prompts for this project |
+| --model | qwen2.5-coder-7b-instruct | Model to use |
+
+### Cron Jobs
+
+See `crontab.example` for automated scheduling options.
+
+## OpenClaw Oversight
+
+OpenClaw uses AIPM to oversee project development:
+
+```bash
+# Check project status
+python3 openclaw_oversight.py status OpenMind
+
+# See next prompts
+python3 openclaw_oversight.py next
+
+# Process a prompt
+python3 openclaw_oversight.py process
+
+# Generate report
+python3 openclaw_oversight.py report
+```

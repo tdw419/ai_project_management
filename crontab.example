@@ -1,0 +1,11 @@
+# AIPM Cron Jobs
+
+# Continuous processing loop (runs every minute to check if loop is running)
+# If loop is not running, it starts it
+# * * * * * /home/jericho/zion/projects/ai_project_management/aipm/loop.sh start --interval 60 >> /home/jericho/zion/projects/ai_project_management/aipm/logs/cron.log 2>&1
+
+# Alternative: Run one prompt every 5 minutes
+# */5 * * * * cd /home/jericho/zion/projects/ai_project_management/aipm && source .venv/bin/activate && python3 -c "from aipm import get_aipm; import asyncio; asyncio.run(get_aipm().process_next())" >> /home/jericho/zion/projects/ai_project_management/aipm/logs/cron.log 2>&1
+
+# Daily summary at 8 AM
+# 0 8 * * * cd /home/jericho/zion/projects/ai_project_management/aipm && source .venv/bin/activate && python3 openclaw_oversight.py report >> /home/jericho/zion/projects/ai_project_management/aipm/logs/daily.log 2>&1
