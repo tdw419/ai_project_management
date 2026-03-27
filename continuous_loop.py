@@ -44,6 +44,9 @@ try:
 except ImportError:
     HAS_ROADMAP = False
 
+# Loop Control for dashboard parity (Phase 1.3)
+from aipm.loop_control import LoopController, LoopCommand, LoopState, LoopStatus
+
 # Add AutoSpec integration (vendored)
 try:
     from autospec.autoresearch.loop import ExperimentLoop, Hypothesis
@@ -119,6 +122,17 @@ class ContinuousLoop:
         else:
             self.roadmap = None
         
+        # Loop control (Phase 1.3) - file-based control plane
+        self.controller = LoopController(Path(__file__).parent)
+        self.paused = False
+        self._run_once_pending = False
+        self.start_time = time.time()
+        self.status = LoopStatus(
+            state=LoopState.STOPPED.value,
+            model=self.model,
+        )
+        print("✅ Loop Controller initialized (dashboard control enabled)")
+
         # Handle shutdown signals
         signal.signal(signal.SIGINT, self._shutdown)
         signal.signal(signal.SIGTERM, self._shutdown)
@@ -127,7 +141,108 @@ class ContinuousLoop:
         """Handle shutdown signals"""
         print("\n\n🛑 Shutdown signal received...")
         self.running = False
-    
+        self.status.state = LoopState.STOPPED.value
+        self.controller.write_status(self.status)
+
+    def _poll_control(self) -> None:
+        """Check for commands from the dashboard/API."""
+        cmd = self.controller.read_command()
+        if cmd is None:
+            return
+
+        if cmd == LoopCommand.PAUSE:
+            self.paused = True
+            self.status.state = LoopState.PAUSED.value
+            self.controller.write_status(self.status)
+            print("⏸  PAUSED by dashboard command")
+
+        elif cmd == LoopCommand.RESUME:
+            self.paused = False
+            self.status.state = LoopState.RUNNING.value
+            self.controller.write_status(self.status)
+            print("▶  RESUMED by dashboard command")
+
+        elif cmd == LoopCommand.RUN_ONCE:
+            self.paused = False  # Temporarily unpause for one iteration
+            self._run_once_pending = True
+            self.status.state = LoopState.RUNNING.value
+            print("🔂 RUN ONCE by dashboard command")
+
+        elif cmd == LoopCommand.STOP:
+            self.running = False
+            print("🛑 STOP by dashboard command")
+
+    def _update_status(self, **overrides) -> None:
+        """Update and write loop status for dashboard consumption."""
+        self.status.processed_count = self.processed_count
+        self.status.error_count = self.error_count
+        self.status.model = self.model
+        self.status.failover_active = self.failover_active
+        self.status.uptime_seconds = int(time.time() - self.start_time)
+
+        # Queue stats
+        try:
+            stats = self.aipm.get_stats()
+            queue = stats.get('queue', {})
+            self.status.queue_pending = queue.get('pending_count', 0)
+            self.status.queue_completed = queue.get('completed_count', 0)
+        except Exception:
+            pass
+
+        # Roadmap progress
+        if self.roadmap:
+            self.status.roadmap_progress = self.roadmap.get_progress_report()
+
+        for k, v in overrides.items():
+            if hasattr(self.status, k):
+                setattr(self.status, k, v)
+
+        self.controller.write_status(self.status)
+
+    def _check_breakpoint(self, prompt: dict) -> bool:
+        """
+        Check if a task requires human approval before processing.
+
+        Returns True if task is approved (or no breakpoint needed).
+        Returns False if task should be skipped (timeout/denied).
+        """
+        metadata = prompt.get('metadata', {}) or {}
+        priority = prompt.get('priority', 5)
+
+        # Breakpoint conditions:
+        # 1. Priority 1 (🔥) roadmap tasks
+        # 2. Tasks with explicit breakpoint metadata
+        needs_approval = (
+            (priority <= 1 and metadata.get('source') == 'roadmap') or
+            metadata.get('requires_approval', False)
+        )
+
+        if not needs_approval:
+            return True
+
+        task_desc = prompt.get('prompt', '')[:80]
+        reason = f"High-impact task (priority {priority}): {task_desc}"
+        print(f"\n⚠️  BREAKPOINT: {reason}")
+        print(f"   Waiting for human approval via dashboard or: echo '{{\"command\":\"approve\"}}' > .loop.control")
+
+        self.controller.request_approval(task_desc, reason)
+
+        # Wait for approval (up to 1 hour, checking every 5 seconds)
+        approved = self.controller.wait_for_approval(timeout=3600, poll_interval=5)
+
+        if approved:
+            print("✅ Approved — proceeding with task")
+            self.status.state = LoopState.RUNNING.value
+            self.status.breakpoint_reason = None
+            self.controller.write_status(self.status)
+            return True
+        else:
+            print("⏭  Breakpoint timed out or denied — skipping task")
+            self.status.state = LoopState.RUNNING.value
+            self.status.breakpoint_reason = None
+            self.controller.write_status(self.status)
+            return False
+
     async def check_availability(self) -> bool:
         """Check if primary LM Studio is available"""
         available = await self.bridge.is_available()
@@ -189,12 +304,23 @@ class ContinuousLoop:
                 # Not a match - skip this prompt
                 return False
         
+        # Breakpoint: pause for human oversight on high-impact tasks (Phase 1.3)
+        if not self._check_breakpoint(prompt):
+            return False
+
         print(f"\n{'='*70}")
         print(f"🔄 Processing: {prompt['id']}")
         print(f"   Priority: {prompt['priority']}")
         print(f"   Prompt: {prompt['prompt'][:80]}...")
         print(f"{'='*70}")
-        
+
+        # Update status with current task
+        self._update_status(
+            state=LoopState.PROCESSING.value,
+            current_task=prompt['prompt'][:80],
+            current_task_phase=prompt.get('metadata', {}).get('phase') if prompt.get('metadata') else None,
+        )
+
         # Mark as processing
         self.aipm.ctrm.mark_processing(prompt['id'])
         
@@ -472,39 +598,63 @@ class ContinuousLoop:
             return
         
         iteration = 0
-        
+        self._update_status(state=LoopState.RUNNING.value)
+        run_once = False
+
         while self.running:
             iteration += 1
-            
+
             try:
+                # Poll for dashboard/API commands (Phase 1.3)
+                self._poll_control()
+
+                # Handle pause state
+                if self.paused:
+                    self._update_status(state=LoopState.PAUSED.value)
+                    await asyncio.sleep(2)  # Check commands every 2s while paused
+                    continue
+
                 # Check if we've hit max
                 if self.max_prompts and self.processed_count >= self.max_prompts:
                     print(f"\n✅ Reached max prompts ({self.max_prompts}). Stopping.")
                     break
-                
+
                 # Try to process a prompt
                 processed = await self.process_one()
-                
+
                 if processed:
-                    # Update dashboard after each successful process
                     self.update_dashboard()
+                    self._update_status(
+                        state=LoopState.RUNNING.value,
+                        current_task=None,
+                        last_processed_at=datetime.now().isoformat(),
+                    )
+
+                    # Re-pause after run_once
+                    if self._run_once_pending:
+                        self._run_once_pending = False
+                        self.paused = True
+                        print("⏸  RUN ONCE complete — re-pausing")
+                        self._update_status(state=LoopState.PAUSED.value)
                 else:
-                    # No prompt available or filtered out
+                    self._update_status(state=LoopState.IDLE.value, current_task=None)
                     print(f"[{datetime.now().strftime('%H:%M:%S')}] No prompts to process, waiting {self.interval}s...")
-                
+
                 # Wait for next interval
                 if self.running:
                     await asyncio.sleep(self.interval)
-            
+
             except Exception as e:
                 print(f"\n❌ Error in loop: {e}")
                 self.error_count += 1
-                
-                # Wait before retrying
+                self._update_status(state=LoopState.RUNNING.value)
+
                 if self.running:
                     await asyncio.sleep(self.interval * 2)
-        
+
         # Final summary
+        self._update_status(state=LoopState.STOPPED.value, current_task=None)
+        self.controller.cleanup()
         print("\n" + "=" * 70)
         print("📊 FINAL SUMMARY")
         print("=" * 70)

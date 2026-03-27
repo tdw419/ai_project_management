@@ -19,6 +19,7 @@ from aipm.core.engine import PromptSystem, Prompt
 from aipm.project.manager import ProjectManager
 from aipm.ascii_world.dashboard import Dashboard, HTMLDashboard
 from aipm.api.health import handle_health, handle_ping
+from aipm.loop_control import LoopController, LoopCommand
 
 
 class APIServer:
@@ -50,6 +51,7 @@ class APIServer:
         self.html_dashboard = HTMLDashboard(self.dashboard)
         self._running = False
         self._clients = set()
+        self.loop_controller = LoopController()
     
     def create_app(self) -> web.Application:
         """Create the aiohttp application"""
@@ -66,6 +68,7 @@ class APIServer:
         app.router.add_post("/api/prompts", self.handle_add_prompt)
         app.router.add_get("/api/analyze/{prompt_id}", self.handle_analyze)
         app.router.add_post("/api/control", self.handle_control)
+        app.router.add_get("/api/status", self.handle_loop_status)
         app.router.add_get("/ws", self.handle_websocket)
         
         return app
@@ -171,25 +174,36 @@ class APIServer:
         })
     
     async def handle_control(self, request: web.Request) -> web.Response:
-        """Handle control actions"""
+        """Handle control actions — sends commands to the real continuous_loop.py"""
         data = await request.json()
         action = data.get("action")
-        
-        if action == "start":
-            self._running = True
-            asyncio.create_task(self._run_loop())
-            return web.json_response({"status": "started"})
-        
-        elif action == "pause":
-            self._running = False
-            return web.json_response({"status": "paused"})
-        
-        elif action == "run_once":
-            result = await self.system.process_next()
-            await self._broadcast({"type": "processed", "result": result})
-            return web.json_response(result)
-        
-        return web.json_response({"error": "Unknown action"}, status=400)
+
+        command_map = {
+            "start": LoopCommand.RESUME,
+            "resume": LoopCommand.RESUME,
+            "pause": LoopCommand.PAUSE,
+            "run_once": LoopCommand.RUN_ONCE,
+            "stop": LoopCommand.STOP,
+            "approve": LoopCommand.APPROVE,
+        }
+
+        command = command_map.get(action)
+        if not command:
+            return web.json_response({"error": f"Unknown action: {action}"}, status=400)
+
+        self.loop_controller.send_command(command)
+
+        # Broadcast to WebSocket clients
+        await self._broadcast({"type": "control", "action": action})
+
+        # Return current loop status
+        status = self.loop_controller.read_status()
+        return web.json_response({"status": action, "loop": json.loads(status.to_json())})
+
+    async def handle_loop_status(self, request: web.Request) -> web.Response:
+        """Return real-time loop status from .loop.status"""
+        status = self.loop_controller.read_status()
+        return web.json_response(json.loads(status.to_json()))
     
     async def handle_websocket(self, request: web.Request) -> web.WebSocketResponse:
         """Handle WebSocket connections"""

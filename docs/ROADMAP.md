@@ -34,10 +34,10 @@
 
 ### 3. CLI/Dashboard Parity
 
-- [ ] Full ASCII World Dashboard control
-- [ ] Add "Pause for Human Oversight" breakpoints
-- [ ] Enable loop start/stop from dashboard
-- [ ] Real-time progress visualization
+- [x] Full ASCII World Dashboard control
+- [x] Add "Pause for Human Oversight" breakpoints
+- [x] Enable loop start/stop from dashboard
+- [x] Real-time progress visualization
 
 ---
 
@@ -115,3 +115,6 @@
 - [x] Closed Ouroboros loop: process_one now marks roadmap tasks [x] in ROADMAP.md
 - [x] Added SQLite self-healing: WAL mode, retry with backoff, stale lock + corruption recovery
 - [x] Wired resilient_connection into CTRMDatabase and CTRMPromptManager
+- [x] Phase 1.3: Loop control plane (.loop.control/.loop.status) for dashboard parity
+- [x] Phase 1.3: Breakpoints for high-impact tasks (priority 1 roadmap tasks pause for approval)
+- [x] Phase 1.3: API server wired to real loop via LoopController + /api/status endpoint
