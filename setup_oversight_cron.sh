@@ -47,3 +47,7 @@ echo "  tail -f $SCRIPT_DIR/logs/oversight.log"
 echo ""
 echo "To remove cron job:"
 echo "  crontab -e  # Then delete the oversight_monitor line"
+
+# Autonomous Recruiter - runs nightly at 2 AM
+# Scans all projects and recruits code into the Living Museum
+0 2 * * * cd /home/jericho/zion/projects/ai_project_management/aipm && /home/jericho/zion/projects/ai_project_management/aipm/.venv/bin/python3 /home/jericho/zion/projects/ai_project_management/aipm/autonomous_recruiter.py >> /home/jericho/zion/projects/ai_project_management/aipm/logs/recruiter.log 2>&1
