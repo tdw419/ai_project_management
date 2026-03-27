@@ -1,0 +1,56 @@
+{
+  "timestamp": "2026-03-26T20:20:16.630415",
+  "loop": {
+    "running": true,
+    "pid": 2635324
+  },
+  "queue": {
+    "pending": 2438,
+    "processing": 7,
+    "completed": 32
+  },
+  "activity": {
+    "completed_last_hour": 25
+  },
+  "projects": [
+    {
+      "name": "AIPM Self-Improvement",
+      "id": "proj_1cd5e0d1",
+      "tasks_total": 7,
+      "tasks_completed": 0,
+      "completion": 0.0
+    },
+    {
+      "name": "Neuro-Spatial Fusion",
+      "id": "proj_bb77d78c",
+      "tasks_total": 7,
+      "tasks_completed": 0,
+      "completion": 0.0
+    },
+    {
+      "name": "OpenMind",
+      "id": "proj_36f155cd",
+      "tasks_total": 6,
+      "tasks_completed": 0,
+      "completion": 0.0
+    },
+    {
+      "name": "Integration Test",
+      "id": "proj_b4a371a8",
+      "tasks_total": 0,
+      "tasks_completed": 0,
+      "completion": 0
+    },
+    {
+      "name": "Test Project",
+      "id": "proj_7a73572a",
+      "tasks_total": 0,
+      "tasks_completed": 0,
+      "completion": 0
+    }
+  ],
+  "actions": {
+    "prompts_added": [],
+    "prompts_count": 0
+  }
+}
