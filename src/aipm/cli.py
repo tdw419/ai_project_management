@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
@@ -377,6 +378,83 @@ def status():
             console.print("[cyan]Load a model in LM Studio GUI first, then use 'aipm process next'[/cyan]")
     
     asyncio.run(_status())
+
+
+@main.group()
+def loop():
+    """Continuous processing loop commands"""
+    pass
+
+
+@loop.command("start")
+@click.option("--interval", "-i", default=60, help="Seconds between prompts")
+@click.option("--max", "-m", default=None, help="Maximum prompts to process")
+@click.option("--project", "-p", default=None, help="Only process prompts for this project")
+@click.option("--model", default=None, help="Model to use")
+def loop_start(interval: int, max: Optional[int], project: Optional[str], model: Optional[str]):
+    """Start the continuous processing loop"""
+    import subprocess
+    import os
+    
+    script_path = Path(__file__).parent.parent.parent / "continuous_loop.py"
+    
+    cmd = [
+        sys.executable, str(script_path),
+        "--interval", str(interval),
+    ]
+    
+    if max:
+        cmd.extend(["--max", str(max)])
+    if project:
+        cmd.extend(["--project", project])
+    if model:
+        cmd.extend(["--model", model])
+    
+    console.print("[cyan]Starting continuous loop...[/cyan]")
+    console.print(f"  Interval: {interval}s")
+    if max:
+        console.print(f"  Max prompts: {max}")
+    if project:
+        console.print(f"  Project: {project}")
+    console.print(f"  Model: {model or DEFAULT_REASONING_MODEL}")
+    console.print("")
+    
+    # Run in foreground (Ctrl+C to stop)
+    os.execvp(*cmd)
+
+
+@loop.command("stop")
+def loop_stop():
+    """Stop the continuous loop"""
+    import subprocess
+    
+    result = subprocess.run(
+        ["pkill", "-f", "-f", "continuous_loop.py"],
+        capture_output=True,
+    )
+    
+    if result.returncode == 0:
+        console.print("[green]✓ Loop stopped[/green]")
+    else:
+        console.print("[yellow]No running loop found[/yellow]")
+
+
+@loop.command("status")
+def loop_status():
+    """Check if loop is running"""
+    import subprocess
+    
+    result = subprocess.run(
+        ["pgrep", "-f", "continuous_loop.py"],
+        capture_output=True,
+    )
+    
+    if result.stdout:
+        console.print("[green]✓ Loop is running[/green]")
+        console.print(f"  PID: {result.stdout.strip()}")
+    else:
+        console.print("[yellow]No loop currently running[/yellow]")
+        console.print("[cyan]Start with: aipm loop start[/cyan]")
 
 
 if __name__ == "__main__":
