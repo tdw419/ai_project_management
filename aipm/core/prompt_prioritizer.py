@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 import math
 
-CTRM_DB = Path("/home/jericho/zion/projects/ctrm/ctrm/data/truths.db")
+from aipm.config import CTRM_DB
 
 
 class PromptPrioritizer:

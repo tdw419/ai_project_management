@@ -10,11 +10,8 @@ import asyncio
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-# Default paths
-DEFAULT_DATA_DIR = Path(__file__).parent.parent.parent / "data"
-DEFAULT_CTRM_DB = DEFAULT_DATA_DIR / "truths.db"
-DEFAULT_QUEUE_DB = DEFAULT_DATA_DIR / "queue.db"
-DEFAULT_PROJECTS_DB = DEFAULT_DATA_DIR / "projects.db"
+# Use config for paths
+from aipm.config import CTRM_DB, QUEUE_DB, PROJECTS_DB, DATA_DIR
 
 
 class AIPM:
@@ -62,13 +59,13 @@ class AIPM:
         queue_db: Optional[Path] = None,
         projects_db: Optional[Path] = None,
     ):
-        self.data_dir = Path(data_dir) if data_dir else DEFAULT_DATA_DIR
+        self.data_dir = Path(data_dir) if data_dir else DATA_DIR
         self.data_dir.mkdir(parents=True, exist_ok=True)
         
-        # Database paths
-        self.ctrm_db = Path(ctrm_db) if ctrm_db else DEFAULT_CTRM_DB
-        self.queue_db = Path(queue_db) if queue_db else DEFAULT_QUEUE_DB
-        self.projects_db = Path(projects_db) if projects_db else DEFAULT_PROJECTS_DB
+        # Database paths - use config defaults
+        self.ctrm_db = Path(ctrm_db) if ctrm_db else CTRM_DB
+        self.queue_db = Path(queue_db) if queue_db else QUEUE_DB
+        self.projects_db = Path(projects_db) if projects_db else PROJECTS_DB
         
         # Initialize components (lazy loading)
         self._ctrm_manager = None

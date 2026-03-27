@@ -4,8 +4,8 @@ AIPM Configuration
 
 from pathlib import Path
 
-# Default paths
-PACKAGE_ROOT = Path(__file__).parent.parent.parent
+# Default paths - PACKAGE_ROOT is 2 levels up from this file (aipm/config.py -> aipm/ -> repo_root/)
+PACKAGE_ROOT = Path(__file__).parent.parent
 DATA_DIR = PACKAGE_ROOT / "data"
 CTRM_DB = DATA_DIR / "truths.db"
 QUEUE_DB = DATA_DIR / "queue.db"

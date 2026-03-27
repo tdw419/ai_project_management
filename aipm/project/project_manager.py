@@ -23,8 +23,7 @@ from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field, asdict
 from enum import Enum
 
-CTRM_DB = Path("/home/jericho/zion/projects/ctrm/ctrm/data/truths.db")
-PROJECTS_DB = Path.home() / ".openclaw" / "workspace" / "projects.db"
+from aipm.config import CTRM_DB, PROJECTS_DB
 
 
 class TaskStatus(Enum):
@@ -299,7 +298,7 @@ class ProjectManager:
         import hashlib
         from pathlib import Path
         
-        ascii_path = Path.home() / ".openclaw" / "workspace" / ".ouroboros" / "project_dashboard.ascii"
+        ascii_path = from aipm.config import .OUROBOROS; .OUROBOROS / "project_dashboard.ascii"
         ascii_path.parent.mkdir(parents=True, exist_ok=True)
         
         # Count by status

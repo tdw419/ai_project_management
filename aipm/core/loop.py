@@ -41,7 +41,7 @@ class LoopConfig:
     goal_file: Path
     results_file: Path
     tree_file: Path
-    db_path: Path = Path("/home/jericho/zion/projects/ctrm/ctrm/data/truths.db")
+    db_path: Optional[Path] = None  # Will use config.CTRM_DB if not provided
 
     # Timing
     iteration_delay_seconds: float = 5.0
@@ -69,7 +69,9 @@ class OuroborosLoop:
         
         # 1. Initialize Components
         print("--- Initializing Ouroboros Core ---")
-        self.ctrm = CTRMPromptManager(config.db_path)
+        from aipm.config import CTRM_DB
+        db_path = config.db_path or CTRM_DB
+        self.ctrm = CTRMPromptManager(db_path)
         self.engine = create_default_engine(self.project_root / ".ouroboros")
         self.semantic = SemanticAnalyzer(self.project_root / ".ouroboros/semantic")
         

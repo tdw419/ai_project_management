@@ -61,7 +61,10 @@ class CTRMDatabase:
     """
     
     def __init__(self, db_path: Optional[Path] = None):
-        self.db_path = db_path or Path.home() / ".aipm" / "data" / "truths.db"
+        if db_path is None:
+            from aipm.config import CTRM_DB
+            db_path = CTRM_DB
+        self.db_path = db_path
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self._init_db()
     

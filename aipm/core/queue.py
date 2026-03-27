@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Any
 
 from aipm.core.engine import Prompt, PromptStatus, PromptCategory
+from aipm.config import QUEUE_DB
 
 
 class PromptQueue:
@@ -26,7 +27,7 @@ class PromptQueue:
     """
     
     def __init__(self, db_path: Optional[Path] = None):
-        self.db_path = db_path or Path.home() / ".aipm" / "data" / "queue.db"
+        self.db_path = db_path or QUEUE_DB
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self._init_db()
     

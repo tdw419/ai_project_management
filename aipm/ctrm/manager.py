@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Optional, Dict, Any, List
 
 # Import CTRM database
-CTRM_DB = Path("/home/jericho/zion/projects/ctrm/ctrm/data/truths.db")
+from aipm.config import CTRM_DB
 
 
 class CTRMPromptManager:

@@ -21,8 +21,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-# Add AIPM to path
-sys.path.insert(0, str(Path(__file__).parent / "src"))
+# Add AIPM to path (package is at ./aipm/, not ./src/aipm/)
+sys.path.insert(0, str(Path(__file__).parent))
 sys.path.insert(0, str(Path(__file__).parent / "vendor"))
 
 from aipm import AIPM, get_aipm
