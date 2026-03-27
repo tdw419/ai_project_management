@@ -18,6 +18,7 @@ from typing import Optional, Dict, Any, List
 
 # Import CTRM database
 from aipm.config import CTRM_DB
+from aipm.sqlite_resilient import resilient_connection
 
 
 class CTRMPromptManager:
@@ -38,7 +39,7 @@ class CTRMPromptManager:
         # Will use semantic_analyzer from Ouroboros
         
     def _get_connection(self):
-        """Get database connection."""
+        """Get database connection (legacy, prefer resilient_connection context manager)."""
         return sqlite3.connect(self.db_path)
     
     # === Queue Operations ===
@@ -53,18 +54,18 @@ class CTRMPromptManager:
         # Calculate CTRM scores
         scores = self._calculate_ctrm_scores(prompt)
         
-        with sqlite3.connect(self.db_path) as conn:
+        with resilient_connection(self.db_path) as conn:
             conn.execute("""
-                INSERT INTO prompt_queue 
+                INSERT INTO prompt_queue
                 (id, prompt, source, priority, status, queued_at,
                  ctrm_coherent, ctrm_authentic, ctrm_actionable,
                  ctrm_meaningful, ctrm_grounded, ctrm_confidence)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (prompt_id, prompt, source, priority, 'pending', 
-             now, scores['coherent'], scores['authentic'], 
-             scores['actionable'], scores['meaningful'], scores['grounded'], 
+            """, (prompt_id, prompt, source, priority, 'pending',
+             now, scores['coherent'], scores['authentic'],
+             scores['actionable'], scores['meaningful'], scores['grounded'],
              scores['confidence']))
-            
+
         return prompt_id
     
     def dequeue(self, status: str = "pending", 
@@ -81,7 +82,7 @@ class CTRMPromptManager:
         Returns:
             List of prompts matching criteria
         """
-        with sqlite3.connect(self.db_path) as conn:
+        with resilient_connection(self.db_path) as conn:
             query = """
                 SELECT id, prompt, priority, status, ctrm_confidence, queued_at
                 FROM prompt_queue
@@ -108,41 +109,34 @@ class CTRMPromptManager:
     def mark_processing(self, prompt_id: str) -> bool:
         """Mark a prompt as being processed."""
         now = datetime.now().isoformat()
-        
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        cursor.execute("""
-            UPDATE prompt_queue 
-            SET status = 'processing', processed_at = ?
-            WHERE id = ?
-        """, (now, prompt_id))
-        
-        rowcount = cursor.rowcount
-        conn.commit()
-        conn.close()
-        
-        return rowcount > 0
+
+        with resilient_connection(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                UPDATE prompt_queue
+                SET status = 'processing', processed_at = ?
+                WHERE id = ?
+            """, (now, prompt_id))
+            conn.commit()
+            return cursor.rowcount > 0
     
     def complete(self, prompt_id: str, result: str,
                     verified: bool = False, notes: str = "") -> bool:
         """Mark a prompt as completed with result."""
         now = datetime.now().isoformat()
-        
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        cursor.execute("""
-            UPDATE prompt_queue 
-            SET status = 'completed', 
-                completed_at = ?,
-                result = ?,
-                result_verified = ?,
-                verification_notes = ?
-            WHERE id = ?
-        """, (now, result, int(verified), notes, prompt_id))
-        
-        conn.commit()
-        conn.close()
-        
+
+        with resilient_connection(self.db_path) as conn:
+            conn.execute("""
+                UPDATE prompt_queue
+                SET status = 'completed',
+                    completed_at = ?,
+                    result = ?,
+                    result_verified = ?,
+                    verification_notes = ?
+                WHERE id = ?
+            """, (now, result, int(verified), notes, prompt_id))
+            conn.commit()
+
         return True
     
     # === Processing ===
@@ -339,46 +333,42 @@ class CTRMPromptManager:
     
     def get_stats(self) -> Dict[str, Any]:
         """Get queue statistics."""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        stats = {}
-        
-        # Count by status
-        cursor.execute("""
-            SELECT status, COUNT(*) as count
-            FROM prompt_queue
-            GROUP BY status
-        """)
-        for row in cursor.fetchall():
-            stats[f"{row[0]}_count"] = row[1]
-        
-        # Average confidence by status
-        cursor.execute("""
-            SELECT status, AVG(ctrm_confidence) as avg_confidence
-            FROM prompt_queue
-            GROUP BY status
-        """)
-        for row in cursor.fetchall():
-            stats[f"{row[0]}_avg_confidence"] = row[1]
-        
-        # Top priorities
-        cursor.execute("""
-            SELECT priority, COUNT(*) as count
-            FROM prompt_queue
-            WHERE status = 'pending'
-            GROUP BY priority
-            ORDER BY count DESC
-            LIMIT 5
-        """)
-        for row in cursor.fetchall():
-            stats[f"priority_{row[0]}_count"] = row[1]
-        
-        conn.close()
-        return stats
+        with resilient_connection(self.db_path) as conn:
+            cursor = conn.cursor()
+            stats = {}
+
+            cursor.execute("""
+                SELECT status, COUNT(*) as count
+                FROM prompt_queue
+                GROUP BY status
+            """)
+            for row in cursor.fetchall():
+                stats[f"{row[0]}_count"] = row[1]
+
+            cursor.execute("""
+                SELECT status, AVG(ctrm_confidence) as avg_confidence
+                FROM prompt_queue
+                GROUP BY status
+            """)
+            for row in cursor.fetchall():
+                stats[f"{row[0]}_avg_confidence"] = row[1]
+
+            cursor.execute("""
+                SELECT priority, COUNT(*) as count
+                FROM prompt_queue
+                WHERE status = 'pending'
+                GROUP BY priority
+                ORDER BY count DESC
+                LIMIT 5
+            """)
+            for row in cursor.fetchall():
+                stats[f"priority_{row[0]}_count"] = row[1]
+
+            return stats
     
     def get_next_n(self, n: int = 10, status: str = "pending") -> List[Dict]:
         """Get next N prompts from queue."""
-        with sqlite3.connect(self.db_path) as conn:
+        with resilient_connection(self.db_path) as conn:
             conn.execute("""
                 SELECT id, prompt, priority, ctrm_confidence, queued_at
                 FROM prompt_queue

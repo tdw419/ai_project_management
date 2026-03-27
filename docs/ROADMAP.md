@@ -27,9 +27,9 @@
 
 ### 2. Autonomous Recovery Protocols
 
-- [ ] 🔥 Implement failover: LM Studio ↔ Pi Agent (GLM-5)
-- [ ] Add self-healing for SQLite database locks
-- [ ] Add recovery for corrupted state files
+- [x] 🔥 Implement failover: LM Studio ↔ Pi Agent (GLM-5)
+- [x] Add self-healing for SQLite database locks
+- [x] Add recovery for corrupted state files
 - [ ] Create health check endpoints
 
 ### 3. CLI/Dashboard Parity
@@ -111,3 +111,7 @@
 - [x] Created roadmap document
 - [x] Implemented RAG World Model (Phase 1.1)
 - [x] Added roadmap processor module
+- [x] Fixed mark_completed regex bug in roadmap processor
+- [x] Closed Ouroboros loop: process_one now marks roadmap tasks [x] in ROADMAP.md
+- [x] Added SQLite self-healing: WAL mode, retry with backoff, stale lock + corruption recovery
+- [x] Wired resilient_connection into CTRMDatabase and CTRMPromptManager

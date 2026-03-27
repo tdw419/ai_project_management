@@ -76,6 +76,11 @@ class ContinuousLoop:
         self.error_count = 0
         self.running = True
         
+        # Failover logic state (Phase 1.2)
+        self.failover_active = False
+        self.last_availability_check = 0
+        self.check_cooldown = 300  # 5 minutes
+        
         # Initialize Pi agent provider if requested
         if self.use_pi:
             self.pi_provider = PiAgentProvider(PiAgentConfig(
@@ -123,8 +128,17 @@ class ContinuousLoop:
         print("\n\n🛑 Shutdown signal received...")
         self.running = False
     
+    async def check_availability(self) -> bool:
+        """Check if primary LM Studio is available"""
+        available = await self.bridge.is_available()
+        self.last_availability_check = time.time()
+        return available
+
     async def check_model(self) -> bool:
         """Check if a model is loaded"""
+        if not await self.check_availability():
+            return False
+
         loaded = await self.bridge.get_loaded_model()
         if loaded:
             return True
@@ -187,32 +201,80 @@ class ContinuousLoop:
         # Build context
         system_context = self._build_context(prompt)
         
+        # Failover check: If failover is active, check if LM Studio is back every check_cooldown seconds
+        if self.failover_active:
+            if time.time() - self.last_availability_check > self.check_cooldown:
+                print("🔍 Checking if primary LM Studio has recovered...")
+                if await self.check_availability():
+                    print("✅ Primary LM Studio RECOVERED. Switching back from failover.")
+                    self.failover_active = False
+                else:
+                    print(f"⌛ Primary LM Studio still unavailable. Remaining in failover for {self.check_cooldown}s.")
+        
         # Process with Pi Agent or LM Studio
         start_time = time.time()
         
-        if self.use_pi and self.pi_provider:
+        # Decide provider based on failover state
+        use_pi_now = self.failover_active or self.use_pi
+        
+        result = None
+        if use_pi_now and self.pi_provider:
             # Use Pi agent with zai/glm-5
-            print(f"\n🤖 Using Pi Agent with model: {self.pi_model}")
+            failover_notice = " (FAILOVER MODE)" if self.failover_active else ""
+            print(f"\n🤖 Using Pi Agent{failover_notice} with model: {self.pi_model}")
             result = await self.pi_provider.execute_task(
                 task=f"{system_context}\n\n{prompt['prompt']}",
                 model=self.pi_model,
             )
         else:
-            # Use LM Studio
-            result = await self.bridge.process_chat(
-                messages=[
-                    {"role": "system", "content": system_context},
-                    {"role": "user", "content": prompt['prompt']},
-                ],
-                model=self.model,
-                max_tokens=4096,
-                temperature=0.7,
-                auto_load=False,  # We already checked
-            )
+            # Attempt LM Studio
+            try:
+                # Use LM Studio
+                result = await self.bridge.process_chat(
+                    messages=[
+                        {"role": "system", "content": system_context},
+                        {"role": "user", "content": prompt['prompt']},
+                    ],
+                    model=self.model,
+                    max_tokens=4096,
+                    temperature=0.7,
+                    auto_load=True,  # Ensure it tries to load if available
+                )
+                
+                # If it failed due to connection, trigger failover
+                if not result.success and ("connection" in result.error.lower() or "http" in result.error.lower()):
+                    if self.use_pi and self.pi_provider:
+                        print(f"⚠️  LM Studio connection FAILED: {result.error}")
+                        print("🚨 Triggering FAILOVER to Pi Agent...")
+                        self.failover_active = True
+                        self.last_availability_check = time.time()
+                        
+                        # Immediately retry with Pi Agent
+                        print(f"\n🤖 Using Pi Agent (FAILOVER MODE) with model: {self.pi_model}")
+                        result = await self.pi_provider.execute_task(
+                            task=f"{system_context}\n\n{prompt['prompt']}",
+                            model=self.pi_model,
+                        )
+            except Exception as e:
+                if self.use_pi and self.pi_provider:
+                    print(f"⚠️  LM Studio process error: {e}")
+                    print("🚨 Triggering FAILOVER to Pi Agent...")
+                    self.failover_active = True
+                    self.last_availability_check = time.time()
+                    
+                    # Retry with Pi Agent
+                    result = await self.pi_provider.execute_task(
+                        task=f"{system_context}\n\n{prompt['prompt']}",
+                        model=self.pi_model,
+                    )
+                else:
+                    # No failover available, wrap exception in result
+                    from aipm.core.simple_bridge import PromptResult
+                    result = PromptResult(success=False, content=None, provider="lm_studio", error=str(e))
         
         elapsed = time.time() - start_time
         
-        if result.success:
+        if result and result.success:
             print(f"\n✅ SUCCESS ({result.wait_time_ms}ms)")
             print("-" * 70)
             # Print first 2000 chars of result
@@ -235,7 +297,14 @@ class ContinuousLoop:
                 verified=True,
                 notes=f"Processed via {self.model} in {elapsed:.2f}s"
             )
-            
+
+            # Ouroboros: mark roadmap tasks as [x] in ROADMAP.md
+            metadata = prompt.get('metadata', {}) or {}
+            if metadata.get('source') == 'roadmap' and self.roadmap:
+                desc = metadata.get('original_description', '')
+                if desc and self.roadmap.mark_completed(desc):
+                    print(f"  📋 Roadmap updated: [x] {desc[:60]}")
+
             self.processed_count += 1
             return True
         else:

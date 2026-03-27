@@ -168,8 +168,8 @@ class RoadmapProcessor:
         
         # Find and update the checkbox
         # Match the task line and change [ ] to [x]
-        pattern = rf'(\s*[*-]\s+)\[ \]({re.escape(task_description)})'
-        replacement = r'\1[x]\2'
+        pattern = rf'(\s*[*-]\s+)\[ \]\s+({re.escape(task_description)})'
+        replacement = r'\1[x] \2'
         
         new_content = re.sub(pattern, replacement, content)
         

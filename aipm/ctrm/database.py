@@ -14,6 +14,8 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+from aipm.sqlite_resilient import resilient_connection
+
 
 class TruthCategory(str, Enum):
     """Categories of truths"""
@@ -72,7 +74,7 @@ class CTRMDatabase:
     
     def _init_db(self) -> None:
         """Initialize the database schema"""
-        with sqlite3.connect(self.db_path) as conn:
+        with resilient_connection(self.db_path) as conn:
             conn.execute("""
                 CREATE TABLE IF NOT EXISTS truths (
                     id TEXT PRIMARY KEY,
@@ -104,7 +106,7 @@ class CTRMDatabase:
     
     def add(self, truth: Truth) -> None:
         """Add a truth to the database"""
-        with sqlite3.connect(self.db_path) as conn:
+        with resilient_connection(self.db_path) as conn:
             # Map Truth dataclass to actual DB schema
             # content -> claim, source -> agent
             conn.execute("""
@@ -137,8 +139,7 @@ class CTRMDatabase:
     
     def get(self, truth_id: str) -> Optional[Truth]:
         """Get a truth by ID"""
-        with sqlite3.connect(self.db_path) as conn:
-            conn.row_factory = sqlite3.Row
+        with resilient_connection(self.db_path, row_factory=sqlite3.Row) as conn:
             cursor = conn.execute(
                 "SELECT * FROM truths WHERE id = ?", (truth_id,)
             )
@@ -154,14 +155,13 @@ class CTRMDatabase:
     
     def delete(self, truth_id: str) -> None:
         """Delete a truth"""
-        with sqlite3.connect(self.db_path) as conn:
+        with resilient_connection(self.db_path) as conn:
             conn.execute("DELETE FROM truths WHERE id = ?", (truth_id,))
             conn.execute("DELETE FROM truths_fts WHERE id = ?", (truth_id,))
     
     def search(self, query: str, limit: int = 20) -> List[Truth]:
         """Search truths by content"""
-        with sqlite3.connect(self.db_path) as conn:
-            conn.row_factory = sqlite3.Row
+        with resilient_connection(self.db_path, row_factory=sqlite3.Row) as conn:
             cursor = conn.execute("""
                 SELECT t.* FROM truths t
                 JOIN truths_fts fts ON t.id = fts.id
@@ -178,8 +178,7 @@ class CTRMDatabase:
         min_confidence: float = 0.0,
     ) -> List[Truth]:
         """Get truths by category"""
-        with sqlite3.connect(self.db_path) as conn:
-            conn.row_factory = sqlite3.Row
+        with resilient_connection(self.db_path, row_factory=sqlite3.Row) as conn:
             cursor = conn.execute("""
                 SELECT * FROM truths
                 WHERE category = ? AND confidence >= ?
@@ -190,8 +189,7 @@ class CTRMDatabase:
     
     def get_high_confidence(self, threshold: float = 0.8, limit: int = 100) -> List[Truth]:
         """Get truths with high confidence"""
-        with sqlite3.connect(self.db_path) as conn:
-            conn.row_factory = sqlite3.Row
+        with resilient_connection(self.db_path, row_factory=sqlite3.Row) as conn:
             cursor = conn.execute("""
                 SELECT * FROM truths
                 WHERE confidence >= ?
@@ -202,7 +200,7 @@ class CTRMDatabase:
     
     def get_stats(self) -> Dict[str, Any]:
         """Get database statistics"""
-        with sqlite3.connect(self.db_path) as conn:
+        with resilient_connection(self.db_path) as conn:
             stats = {}
             
             # Total count
