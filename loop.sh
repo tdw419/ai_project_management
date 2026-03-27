@@ -83,7 +83,7 @@ case "$1" in
         logs
         ;;
     *)
-        echo "Usage: $0 {start|stop|restart|status|logs} [--interval N] [--max N] [--project NAME]"
+        echo "Usage: $0 {start|stop|restart|status|logs} [options]"
         echo ""
         echo "Commands:"
         echo "  start    - Start the continuous loop"
@@ -93,9 +93,16 @@ case "$1" in
         echo "  logs     - View recent logs"
         echo ""
         echo "Options:"
-        echo "  --interval N   Process every N seconds (default: 60)"
-        echo "  --max N        Process max N prompts then stop"
-        echo "  --project NAME Only process prompts for this project"
+        echo "  --interval N      Process every N seconds (default: 60)"
+        echo "  --max N           Process max N prompts then stop"
+        echo "  --project NAME    Only process prompts for this project"
+        echo "  --pi              Use Pi agent with zai/glm-5 model"
+        echo "  --pi-model MODEL  Use specific model for Pi agent"
+        echo ""
+        echo "Examples:"
+        echo "  $0 start                              # LM Studio mode"
+        echo "  $0 start --pi                         # Pi agent with zai/glm-5"
+        echo "  $0 start --pi --pi-model qwen2.5-7b   # Pi agent with custom model"
         exit 1
         ;;
 esac

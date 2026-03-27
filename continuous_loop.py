@@ -27,7 +27,8 @@ sys.path.insert(0, str(Path(__file__).parent / "vendor"))
 
 from aipm import AIPM, get_aipm
 from aipm.core.simple_bridge import SimpleQueueBridge
-from aipm.config import DEFAULT_REASONING_MODEL, DEFAULT_VISION_MODEL
+from aipm.core.extended_providers import PiAgentProvider, PiAgentConfig
+from aipm.config import DEFAULT_REASONING_MODEL, DEFAULT_VISION_MODEL, DEFAULT_PI_MODEL
 
 # Add AutoSpec integration (vendored)
 try:
@@ -46,6 +47,8 @@ class ContinuousLoop:
         max_prompts: Optional[int] = None,
         project_filter: Optional[str] = None,
         model: Optional[str] = None,
+        use_pi: bool = False,
+        pi_model: Optional[str] = None,
     ):
         self.aipm = get_aipm()
         self.bridge = SimpleQueueBridge()
@@ -53,9 +56,21 @@ class ContinuousLoop:
         self.max_prompts = max_prompts
         self.project_filter = project_filter
         self.model = model or DEFAULT_REASONING_MODEL
+        self.use_pi = use_pi
+        self.pi_model = pi_model or DEFAULT_PI_MODEL
         self.processed_count = 0
         self.error_count = 0
         self.running = True
+        
+        # Initialize Pi agent provider if requested
+        if self.use_pi:
+            self.pi_provider = PiAgentProvider(PiAgentConfig(
+                repo_path=Path(__file__).parent,
+                default_model=self.pi_model,
+            ))
+            print(f"✅ Pi Agent initialized with model: {self.pi_model}")
+        else:
+            self.pi_provider = None
         
         # Add AutoSpec experiment tracking
         if HAS_AUTOSPEC:
@@ -141,18 +156,28 @@ class ContinuousLoop:
         # Build context
         system_context = self._build_context(prompt)
         
-        # Process with LM Studio
+        # Process with Pi Agent or LM Studio
         start_time = time.time()
-        result = await self.bridge.process_chat(
-            messages=[
-                {"role": "system", "content": system_context},
-                {"role": "user", "content": prompt['prompt']},
-            ],
-            model=self.model,
-            max_tokens=4096,
-            temperature=0.7,
-            auto_load=False,  # We already checked
-        )
+        
+        if self.use_pi and self.pi_provider:
+            # Use Pi agent with zai/glm-5
+            print(f"\n🤖 Using Pi Agent with model: {self.pi_model}")
+            result = await self.pi_provider.execute_task(
+                task=f"{system_context}\n\n{prompt['prompt']}",
+                model=self.pi_model,
+            )
+        else:
+            # Use LM Studio
+            result = await self.bridge.process_chat(
+                messages=[
+                    {"role": "system", "content": system_context},
+                    {"role": "user", "content": prompt['prompt']},
+                ],
+                model=self.model,
+                max_tokens=4096,
+                temperature=0.7,
+                auto_load=False,  # We already checked
+            )
         
         elapsed = time.time() - start_time
         
@@ -300,14 +325,16 @@ class ContinuousLoop:
         print(f"\n⚙️  Configuration:")
         print(f"   Interval: {self.interval} seconds")
         print(f"   Model: {self.model}")
+        if self.use_pi:
+            print(f"   Pi Agent: ✅ ENABLED (model: {self.pi_model})")
         if self.max_prompts:
             print(f"   Max prompts: {self.max_prompts}")
         if self.project_filter:
             print(f"   Project filter: {self.project_filter}")
         print(f"\n🚀 Starting loop... (Ctrl+C to stop)\n")
         
-        # Initial model check
-        if not await self.check_model():
+        # Initial model check (skip if using Pi agent)
+        if not self.use_pi and not await self.check_model():
             print("\n❌ No model available. Please load a model in LM Studio first:")
             print(f"   1. Open LM Studio")
             print(f"   2. Load model: {self.model}")
@@ -364,7 +391,9 @@ def main():
     parser.add_argument("--interval", "-i", type=int, default=60, help="Interval between prompts (seconds)")
     parser.add_argument("--max", "-m", type=int, default=None, help="Maximum prompts to process")
     parser.add_argument("--project", "-p", type=str, default=None, help="Filter by project name")
-    parser.add_argument("--model", type=str, default=None, help="Model to use")
+    parser.add_argument("--model", type=str, default=None, help="Model to use (for LM Studio)")
+    parser.add_argument("--pi", action="store_true", help="Use Pi agent instead of LM Studio")
+    parser.add_argument("--pi-model", type=str, default=None, help="Model for Pi agent (default: zai/glm-5)")
     
     args = parser.parse_args()
     
@@ -373,6 +402,8 @@ def main():
         max_prompts=args.max,
         project_filter=args.project,
         model=args.model,
+        use_pi=args.pi,
+        pi_model=args.pi_model,
     )
     
     asyncio.run(loop.run())
