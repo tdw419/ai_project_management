@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Optional, Dict, Any, List
 
 # Import CTRM database
-from aipm.config import CTRM_DB
+CTRM_DB = Path("/home/jericho/zion/projects/ctrm/ctrm/data/truths.db")
 
 
 class CTRMPromptManager:
@@ -55,7 +55,7 @@ class CTRMPromptManager:
         
         with sqlite3.connect(self.db_path) as conn:
             conn.execute("""
-                INSERT INTO prompt_queue 
+                INSERT OR REPLACE INTO prompt_queue 
                 (id, prompt, source, priority, status, queued_at,
                  ctrm_coherent, ctrm_authentic, ctrm_actionable,
                  ctrm_meaningful, ctrm_grounded, ctrm_confidence)
@@ -85,11 +85,12 @@ class CTRMPromptManager:
             query = """
                 SELECT id, prompt, priority, status, ctrm_confidence, queued_at
                 FROM prompt_queue
-                WHERE status = ?
+                WHERE status = ? AND (priority >= ? OR ? IS NULL)
                 ORDER BY priority ASC, ctrm_confidence DESC
                 LIMIT ?
             """
-            cursor = conn.execute(query, (status, limit))
+            cursor = conn.execute(query, (status, priority, priority, limit))
+            
             rows = cursor.fetchall()
             
             return [
@@ -378,7 +379,8 @@ class CTRMPromptManager:
     def get_next_n(self, n: int = 10, status: str = "pending") -> List[Dict]:
         """Get next N prompts from queue."""
         with sqlite3.connect(self.db_path) as conn:
-            conn.execute("""
+            conn.row_factory = sqlite3.Row
+            cursor = conn.execute("""
                 SELECT id, prompt, priority, ctrm_confidence, queued_at
                 FROM prompt_queue
                 WHERE status = ?
@@ -386,7 +388,7 @@ class CTRMPromptManager:
                 LIMIT ?
             """, (status, n))
             
-            return [dict(row) for row in conn.fetchall()]
+            return [dict(row) for row in cursor.fetchall()]
 
 
 # === CLI Interface ===
