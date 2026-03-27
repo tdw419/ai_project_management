@@ -258,16 +258,18 @@ class RAGWorldModel:
         if not self.ctrm_db:
             return 0
         
+        from aipm.ctrm.database import Truth, TruthCategory
+        
         injected = 0
         for change in changes:
             truth_id = hashlib.md5(
                 f"{change.file_path}:{datetime.now().date()}".encode()
             ).hexdigest()[:12]
             
-            self.ctrm_db.add_truth(
+            truth = Truth(
                 id=f"world_model_{truth_id}",
                 content=change.summary,
-                category="world_model",  # RAG-based context
+                category=TruthCategory.WORLD_MODEL,
                 confidence=0.9,
                 source="rag_world_model",
                 tags=["world_model", "git_diff", change.change_type],
@@ -279,6 +281,7 @@ class RAGWorldModel:
                     "classes_added": change.classes_added,
                 }
             )
+            self.ctrm_db.add(truth)
             injected += 1
         
         return injected
@@ -288,18 +291,19 @@ class RAGWorldModel:
         if not self.ctrm_db:
             return ""
         
-        # Query recent world_model truths
-        cutoff = datetime.now().timestamp() - (max_age_hours * 3600)
+        from aipm.ctrm.database import TruthCategory
         
-        # This would query CTRM for recent world_model entries
-        # For now, return placeholder
-        truths = self.ctrm_db.query_by_tag("world_model", limit=20)
+        # Query recent world_model truths by category
+        truths = self.ctrm_db.get_by_category(
+            TruthCategory.WORLD_MODEL,
+            limit=20
+        )
         
         if not truths:
             return ""
         
-        lines = ["## Current Codebase State\n"]
-        for truth in truths:
+        lines = ["## Recent Codebase Changes\n"]
+        for truth in truths[:10]:  # Limit to 10 for prompt size
             lines.append(f"- {truth.content}")
         
         return '\n'.join(lines)
