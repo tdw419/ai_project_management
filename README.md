@@ -1,211 +1,180 @@
 # AIPM - AI Project Manager
 
-> The foundation for AI-driven development
+> The foundational layer for AI-driven project development
 
-AIPM is a complete AI project management infrastructure that provides:
+## What is AIPM?
 
-- **Prompt Management** - Intelligent prioritization, multi-provider routing
-- **CTRM** - Contextual Truth Reference Model for knowledge storage
-- **ASCII World** - Visual dashboards with real-time updates
-- **Project Management** - Tasks, dependencies, milestones
-- **API** - REST + WebSocket for integration
+AIPM is a complete AI project management infrastructure that includes:
 
-## The Self-Referential Loop
+- **Prompt Management** - Queue, prioritize, analyze, and generate prompts
+- **Project Management** - Projects, tasks, milestones, dependencies
+- **CTRM** - Truth database with confidence scoring
+- **ASCII World** - Visual shell for human oversight
+- **API Server** - REST + WebSocket for real-time updates
+
+## The Stack
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                    THE AIPM WORKFLOW                            │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  YOU ──► AI (OpenClaw/Gemini) ──► AIPM System                  │
-│                                     │                           │
-│                                     ▼                           │
-│                          ┌─────────────────┐                    │
-│                          │ Project Manager │                    │
-│                          └────────┬────────┘                    │
-│                                   │                             │
-│                                   ▼                             │
-│                          ┌─────────────────┐                    │
-│                          │  Prompt Engine  │                    │
-│                          └────────┬────────┘                    │
-│                                   │                             │
-│                                   ▼                             │
-│                          ┌─────────────────┐                    │
-│                          │  ASCII Dashboard │ ◄── YOU SEE IT   │
-│                          └────────┬────────┘                    │
-│                                   │                             │
-│                                   ▼                             │
-│                          PROJECT BUILT                         │
-│                          (with improved tools)                  │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                       AIPM STACK                            │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  Layer 4: Applications                                      │
+│  ├── Geometry OS                                            │
+│  ├── OpenClaw                                               │
+│  └── Your AI Project                                        │
+│           │                                                 │
+│           ▼                                                 │
+│  Layer 3: API & CLI                                         │
+│  ├── REST endpoints                                         │
+│  ├── WebSocket server                                       │
+│  └── Command-line interface                                 │
+│           │                                                 │
+│           ▼                                                 │
+│  Layer 2: Management                                        │
+│  ├── Project Manager                                        │
+│  ├── Prompt Engine                                          │
+│  └── Response Analyzer                                      │
+│           │                                                 │
+│           ▼                                                 │
+│  Layer 1: Core (CTRM + ASCII World)                        │
+│  ├── Truth Database                                         │
+│  ├── ASCII Parser/Renderer                                  │
+│  └── Sync Server                                            │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ## Installation
 
 ```bash
+# From PyPI (future)
+pip install aipm
+
 # From source
-git clone https://github.com/tdw419/aipm.git
+git clone https://github.com/openclaw/aipm
 cd aipm
 pip install -e .
-
-# Or directly
-pip install aipm
 ```
 
 ## Quick Start
 
 ```python
-from aipm import PromptSystem, ProjectManager, Dashboard
+from aipm import ProjectManager, PromptEngine, Dashboard
 
 # Initialize
-system = PromptSystem()
 pm = ProjectManager()
+engine = PromptEngine()
 dashboard = Dashboard()
 
-# Create a project
+# Create project
 project = pm.create_project(
-    name="My App",
-    goal="Build a web application",
-    path="/path/to/project"
+    name="My AI App",
+    goal="Build an AI-powered application"
 )
 
 # Add tasks
-pm.add_task(
-    project_id=project.id,
-    name="Implement API",
-    description="Create REST API endpoints",
-    priority=1
-)
+pm.add_task(project.id, "Setup", "Initialize project structure", priority=1)
+pm.add_task(project.id, "API", "Create REST API", priority=2)
+pm.add_task(project.id, "Tests", "Write test suite", priority=3)
+
+# Dashboard auto-updates
+# → ~/.openclaw/workspace/.aipm/project_dashboard.ascii
+
+# Queue ready tasks to CTRM
+pm.queue_ready_tasks(project.id)
 
 # Process prompts
-result = system.process_next()
-print(result)
-
-# View dashboard
-dashboard.serve(port=8080)
+engine.process_next()
 ```
 
 ## CLI Usage
 
 ```bash
-# Start the API server
+# Start API server
 aipm serve --port 8080
 
-# Create a project
-aipm project create "My App" --goal "Build something" --path ./myapp
+# Create project
+aipm project create "My App" --goal "Build something amazing"
 
-# Add tasks
-aipm task add proj_abc123 "Implement feature X" --priority 1
+# Add task
+aipm task add proj_abc123 "Implement feature" --priority 1
 
-# Process prompts
+# Queue ready tasks
+aipm queue ready --project proj_abc123
+
+# Process next prompt
 aipm process next
-aipm process forever --interval 60
 
-# View status
-aipm status
+# View dashboard
+aipm dashboard
 ```
 
 ## Architecture
 
-```
-aipm/
-├── core/           # Prompt engine, queue, analyzer, prioritizer
-├── ctrm/           # Truth database, scoring, models
-├── ascii_world/    # Visual shell, sync server, renderer
-├── project/        # Project/task management, dependencies
-└── api/            # REST + WebSocket server
-```
+### Core Modules
 
-## The Closed-Loop Cycle
+| Module | Purpose |
+|--------|---------|
+| `aipm.core` | Prompt engine, queue, analyzer, prioritizer |
+| `aipm.ctrm` | Truth database and scoring |
+| `aipm.ascii` | Visual shell and sync server |
+| `aipm.project` | Project and task management |
+| `aipm.api` | REST + WebSocket server |
 
-```
-DEQUEUE → PROCESS → ANALYZE → GENERATE → ENQUEUE → [LOOP]
-    │                                           │
-    └───────────────────────────────────────────┘
-```
+### Key Features
 
-1. **DEQUEUE** - Get highest-priority prompt
-2. **PROCESS** - Execute via LLM
-3. **ANALYZE** - Determine quality (COMPLETE/PARTIAL/FAILED)
-4. **GENERATE** - Create follow-up prompts
-5. **ENQUEUE** - Add to queue with adjusted priorities
+**Prompt Management:**
+- Multi-provider queue (GLM, Gemini, Claude, Local)
+- Intelligent prioritization scoring
+- Response quality analysis
+- Template versioning
 
-## Features
+**Project Management:**
+- Projects with goals and milestones
+- Tasks with dependencies
+- Build/test integration
+- Completion tracking
 
-### Prompt Prioritization
+**CTRM:**
+- Truth database (SQLite)
+- CAAMG scoring (Coherent, Authentic, Actionable, Meaningful, Grounded)
+- 2,400+ prompts queued
 
-```python
-score = (5.0 / priority) + (confidence × 3.0) + age_bonus + (impact × 1.5)
-```
+**ASCII World:**
+- ASCII dashboards for human oversight
+- Hash verification for authenticity
+- WebSocket sync for real-time updates
+- HTML renderer
 
-### Quality Assessment
-
-| Icon | Quality | Meaning |
-|------|---------|---------|
-| ✅ | COMPLETE | Task fully achieved |
-| ◐ | PARTIAL | Progress made, more needed |
-| ❌ | FAILED | Task crashed or aborted |
-| 🔍 | NEEDS_REVIEW | Done but needs verification |
-
-### ASCII World Integration
-
-Every action is reflected in ASCII for human oversight:
+## The Self-Referential Loop
 
 ```
-AI creates project → SQLite updated → ASCII dashboard → WebSocket → You see it
+You ──► AI ──► AIPM ──► Better AIPM
+              │              │
+              │              │
+              └──────────────┘
+              (self-improving)
 ```
+
+AIPM can improve itself while using it to build other projects. This is the key insight: **the prompt management system is itself a project that the AI can improve.**
+
+## Documentation
+
+- [Getting Started](docs/getting_started.md)
+- [API Reference](docs/api_reference.md)
+- [Architecture](docs/architecture.md)
 
 ## License
 
 MIT
 
+## Contributing
 
-## Continuous Processing Loop
+Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md)
 
-### Start the Loop
+## Links
 
-```bash
-# Foreground (Ctrl+C to stop)
-aipm loop start
-
-# With options
-aipm loop start --interval 30 --project OpenMind
-
-# Background via shell script
-./loop.sh start
-./loop.sh status
-./loop.sh logs
-./loop.sh stop
-```
-
-### Loop Options
-
-| Option | Default | Description |
-|--------|---------|-------------|
-| --interval | 60 | Seconds between prompts |
-| --max | None | Maximum prompts to process |
-| --project | None | Only process prompts for this project |
-| --model | qwen2.5-coder-7b-instruct | Model to use |
-
-### Cron Jobs
-
-See `crontab.example` for automated scheduling options.
-
-## OpenClaw Oversight
-
-OpenClaw uses AIPM to oversee project development:
-
-```bash
-# Check project status
-python3 openclaw_oversight.py status OpenMind
-
-# See next prompts
-python3 openclaw_oversight.py next
-
-# Process a prompt
-python3 openclaw_oversight.py process
-
-# Generate report
-python3 openclaw_oversight.py report
-```
+- Homepage: https://github.com/openclaw/aipm
+- Documentation: https://aipm.readthedocs.io
+- OpenClaw: https://openclaw.ai

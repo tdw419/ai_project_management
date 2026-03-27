@@ -1,20 +1,18 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
+requires = ["setuptools>=45", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "aipm"
 version = "0.1.0"
-description = "AI Project Manager - The foundation for AI-driven development"
-readme = "README.md"
+description = "AI Project Manager - The foundational layer for AI-driven project development"
+authors = [{name = "OpenClaw Team"}]
 license = {text = "MIT"}
 requires-python = ">=3.10"
-authors = [
-    {name = "Jericho", email = "jericho@example.com"}
-]
-keywords = ["ai", "project-management", "prompts", "automation", "ouroboros"]
+readme = "README.md"
+keywords = ["ai", "project-management", "prompts", "automation"]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3.10",
@@ -22,53 +20,35 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
+    "aiohttp>=3.9.0",
     "click>=8.0.0",
     "pydantic>=2.0.0",
-    "httpx>=0.25.0",
-    "websockets>=12.0",
-    "jinja2>=3.0.0",
-    "rich>=13.0.0",
-    "toml>=0.10.0",
-    "aiofiles>=23.0.0",
+    "sqlite3-api>=0.0.1",
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest>=7.0.0",
     "pytest-asyncio>=0.21.0",
-    "pytest-cov>=4.0.0",
     "black>=23.0.0",
     "mypy>=1.0.0",
-    "ruff>=0.1.0",
 ]
 
 [project.scripts]
 aipm = "aipm.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/tdw419/aipm"
-Documentation = "https://github.com/tdw419/aipm#readme"
-Repository = "https://github.com/tdw419/aipm"
-Issues = "https://github.com/tdw419/aipm/issues"
+Homepage = "https://github.com/tdw419/ai_project_management"
+Documentation = "https://github.com/tdw419/ai_project_management#readme"
+Repository = "https://github.com/tdw419/ai_project_management"
 
 [tool.setuptools.packages.find]
-where = ["src", "vendor"]
-
-[tool.setuptools]
-package-dir = {"" = ".", "aipm" = "src/aipm", "vendor" = "vendor"}
+where = ["."]
+include = ["aipm*"]
 
 [tool.black]
 line-length = 100
-target-version = ['py310', 'py311', 'py312']
-
-[tool.ruff]
-line-length = 100
-select = ["E", "F", "W", "I", "N", "UP", "B", "C4"]
-
-[tool.mypy]
-python_version = "3.10"
-warn_return_any = true
-warn_unused_ignores = true
+target-version = ['py310']
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
