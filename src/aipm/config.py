@@ -19,6 +19,26 @@ DATA_DIR.mkdir(parents=True, exist_ok=True)
 DEFAULT_PROVIDER = "lm_studio"
 LM_STUDIO_URL = "http://localhost:1234"
 
+# Default models
+DEFAULT_VISION_MODEL = "qwen/qwen3-vl-8b"
+DEFAULT_REASONING_MODEL = "qwen2.5-coder-7b-instruct"
+DEFAULT_CODE_MODEL = "qwen2.5-coder-7b-instruct"
+DEFAULT_CHAT_MODEL = "qwen/qwen3.5-9b"
+
+# Project-specific model overrides
+PROJECT_MODELS = {
+    "openmind": {
+        "vision": DEFAULT_VISION_MODEL,
+        "reasoning": DEFAULT_REASONING_MODEL,
+        "code": DEFAULT_CODE_MODEL,
+    },
+    "geometry_os": {
+        "vision": DEFAULT_VISION_MODEL,
+        "reasoning": "qwen/qwen3-coder-30b",
+        "code": "qwen/qwen3-coder-30b",
+    },
+}
+
 # CTRM scoring weights
 CTRM_WEIGHTS = {
     "coherent": 1.0,

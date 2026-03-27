@@ -52,11 +52,13 @@ class SimpleQueueBridge:
     def __init__(
         self,
         lm_studio_url: str = "http://localhost:1234",
-        default_model: str = "qwen/qwen3.5-9b",
+        default_model: str = "qwen2.5-coder-7b-instruct",
+        vision_model: str = "qwen/qwen3-vl-8b",
         timeout: float = 120.0,
     ):
         self.lm_studio_url = lm_studio_url
         self.default_model = default_model
+        self.vision_model = vision_model
         self.timeout = timeout
         self._client = None
         self._loaded_model = None
@@ -313,6 +315,92 @@ class SimpleQueueBridge:
             return PromptResult(
                 success=True,
                 content=content,
+                provider="lm_studio",
+                error=None,
+                wait_time_ms=int(elapsed),
+            )
+        
+        except Exception as e:
+            return PromptResult(
+                success=False,
+                content=None,
+                provider="lm_studio",
+                error=str(e),
+            )
+    
+    async def process_vision(
+        self,
+        prompt: str,
+        image_path: Optional[str] = None,
+        image_url: Optional[str] = None,
+        model: Optional[str] = None,
+        max_tokens: int = 4096,
+        temperature: float = 0.7,
+        auto_load: bool = True,
+    ) -> PromptResult:
+        """
+        Process a vision prompt with an image through LM Studio.
+        
+        Uses the vision model (qwen/qwen3-vl-8b by default).
+        """
+        start_time = datetime.now()
+        model = model or self.vision_model
+        
+        try:
+            client = await self._get_client()
+            
+            # Optionally ensure model is loaded
+            if auto_load:
+                await self.ensure_model_loaded(model)
+            
+            # Build message with image
+            content = [{"type": "text", "text": prompt}]
+            
+            if image_path:
+                # Read and encode image
+                import base64
+                from pathlib import Path
+                
+                image_data = base64.b64encode(Path(image_path).read_bytes()).decode()
+                content.append({
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:image/png;base64,{image_data}"
+                    }
+                })
+            elif image_url:
+                content.append({
+                    "type": "image_url",
+                    "image_url": {"url": image_url}
+                })
+            
+            response = await client.post(
+                f"{self.lm_studio_url}/v1/chat/completions",
+                json={
+                    "model": model,
+                    "messages": [{"role": "user", "content": content}],
+                    "max_tokens": max_tokens,
+                    "temperature": temperature,
+                },
+            )
+            
+            if response.status_code != 200:
+                error_text = response.text
+                return PromptResult(
+                    success=False,
+                    content=None,
+                    provider="lm_studio",
+                    error=f"HTTP {response.status_code}: {error_text}",
+                )
+            
+            data = response.json()
+            content_text = data["choices"][0]["message"].get("content", "")
+            
+            elapsed = (datetime.now() - start_time).total_seconds() * 1000
+            
+            return PromptResult(
+                success=True,
+                content=content_text,
                 provider="lm_studio",
                 error=None,
                 wait_time_ms=int(elapsed),

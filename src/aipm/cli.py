@@ -17,6 +17,7 @@ from rich.panel import Panel
 
 from aipm import AIPM, get_aipm, CTRM_DB, ENHANCED_AVAILABLE
 from aipm.core.simple_bridge import SimpleQueueBridge
+from aipm.config import DEFAULT_REASONING_MODEL, DEFAULT_VISION_MODEL
 
 
 console = Console()
@@ -163,12 +164,23 @@ def process():
 
 
 @process.command("next")
-def process_next():
+@click.option("--model", "-m", default=None, help="Model to use (default: qwen2.5-coder-7b-instruct)")
+@click.option("--vision", "-v", is_flag=True, help="Use vision model (qwen/qwen3-vl-8b)")
+def process_next(model: Optional[str], vision: bool):
     """Process the next prompt"""
-    aipm = get_aipm()
+    from aipm.config import DEFAULT_REASONING_MODEL, DEFAULT_VISION_MODEL
+    
+    # Select model based on flags
+    if vision:
+        model = model or DEFAULT_VISION_MODEL
+        console.print(f"[cyan]Using vision model: {model}[/cyan]")
+    else:
+        model = model or DEFAULT_REASONING_MODEL
+        console.print(f"[cyan]Using reasoning model: {model}[/cyan]")
     
     async def run():
-        result = await aipm.process_next()
+        aipm = get_aipm()
+        result = await aipm.process_next(provider=model)
         console.print_json(json.dumps(result, indent=2, default=str))
     
     asyncio.run(run())
@@ -176,7 +188,8 @@ def process_next():
 
 @process.command("forever")
 @click.option("--interval", "-i", default=60, help="Interval in seconds")
-def process_forever(interval: int):
+@click.option("--model", "-m", default=None, help="Model to use")
+def process_forever(interval: int, model: Optional[str]):
     """Run the processing loop forever"""
     aipm = get_aipm()
     console.print(f"[cyan]Starting processing loop (interval: {interval}s)[/cyan]")
