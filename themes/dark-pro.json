@@ -1,0 +1,17 @@
+{
+  "name": "dark-pro",
+  "description": "Dark professional theme with subtle highlights",
+  "colors": {
+    "active": "#4ec9b0",
+    "idle": "#3e3e42",
+    "critical": "#f44747",
+    "border": "#4a4a4f",
+    "text": "#d4d4d4",
+    "background": "#1e1e1e",
+    "accent": "#569cd6",
+    "warning": "#dcdcaa",
+    "success": "#6a9955",
+    "header": "#ffffff",
+    "muted": "#808080"
+  }
+}

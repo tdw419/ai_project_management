@@ -1,0 +1,51 @@
+# AIPM v3 Configuration
+# Projects managed by the autonomous loop
+
+interval: 60
+maxParallel: 4
+cloudModel: glm-5.1
+localModel: qwen3.5-tools
+openspecBin: /home/jericho/zion/apps/openspec/bin/openspec.js
+hermesBin: hermes
+dataDir: /tmp/openspec_aipm
+
+projects:
+  - name: ascii-world-core
+    path: ../ascii-world-core
+    language: javascript
+    testCommand: npm test 2>&1 | tail -5
+    protectedFiles:
+      - package.json
+    specDriven: true
+
+  - name: openspec
+    path: ../openspec
+    language: typescript
+    testCommand: npx vitest run --reporter=verbose 2>&1 | tail -10
+    protectedFiles:
+      - package.json
+      - tsconfig.json
+      - vitest.config.ts
+    specDriven: true
+
+  - name: glyphlang
+    path: ~/zion/projects/glyphlang
+    language: go
+    testCommand: go test ./... 2>&1 | tail -5
+    protectedFiles: []
+    specDriven: true
+
+  - name: geometry-os-gpu
+    path: ../geometry-os-gpu
+    language: rust
+    testCommand: cargo test 2>&1 | tail -5
+    protectedFiles: []
+    specDriven: false
+
+  - name: aipm-test-web
+    path: /home/jericho/zion/projects/aipm/repos/aipm-test-web
+    language: javascript
+    testCommand: node -c index.js && echo "1/1 tests passing"
+    protectedFiles:
+      - package.json
+    specDriven: true

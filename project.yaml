@@ -1,0 +1,9 @@
+name: aipm
+path: /home/jericho/zion/projects/aipm
+language: python
+test_command: python3 -m pytest tests/ -q --tb=short
+build_command: pip install -e .
+protected_files:
+  - pyproject.toml
+  - main.py
+  - aipm/__init__.py

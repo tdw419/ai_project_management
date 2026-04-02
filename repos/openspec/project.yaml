@@ -1,0 +1,9 @@
+name: openspec
+path: /home/jericho/zion/projects/aipm/repos/openspec
+language: typescript
+test_command: npx vitest run --reporter=verbose
+build_command: pnpm install && pnpm build
+protected_files:
+  - package.json
+  - tsconfig.json
+  - vitest.config.ts

@@ -1,0 +1,4 @@
+id: refactor-loop-monolith
+title: Break loop.py into focused modules
+status: proposed
+created: "2026-03-31"

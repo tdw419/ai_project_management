@@ -1,0 +1,12 @@
+[project]
+name = 'aipm_v2'
+version = '0.1.0'
+description = 'Autonomous Project Management v2 - Multi-Project Orchestrator'
+dependencies = [
+    'pyyaml',
+]
+
+[build-system]
+requires = ['setuptools', 'wheel']
+build-backend = 'setuptools.build_meta'
+

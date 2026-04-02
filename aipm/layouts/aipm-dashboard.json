@@ -1,0 +1,37 @@
+{
+  "name": "aipm-dashboard",
+  "regions": [
+    {
+      "name": "header",
+      "x": "0",
+      "y": "0",
+      "w": "W",
+      "h": "3",
+      "content": "AIPM Dashboard v2"
+    },
+    {
+      "name": "sidebar",
+      "x": "0",
+      "y": "3",
+      "w": "20",
+      "h": "H-4",
+      "content": "project_list_plugin"
+    },
+    {
+      "name": "main",
+      "x": "21",
+      "y": "3",
+      "w": "W-21",
+      "h": "H-4",
+      "content": "queue_view_plugin"
+    },
+    {
+      "name": "footer",
+      "x": "0",
+      "y": "H-1",
+      "w": "W",
+      "h": "1",
+      "content": "progress-bar-plugin"
+    }
+  ]
+}

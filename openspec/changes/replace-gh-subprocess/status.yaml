@@ -1,0 +1,4 @@
+id: replace-gh-subprocess
+title: Replace subprocess gh calls with PyGitHub library
+status: proposed
+created: "2026-03-31"

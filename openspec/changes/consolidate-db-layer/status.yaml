@@ -1,0 +1,4 @@
+id: consolidate-db-layer
+title: Consolidate 4 SQLite databases into unified data layer
+status: proposed
+created: "2026-03-31"

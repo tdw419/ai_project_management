@@ -1,0 +1,3 @@
+node_modules/\n.venv/\nvenv/\n__pycache__/\n*.pyc\n.ouroboros/\n*.db\n*.log\n
+.ssh/
+node_modules/

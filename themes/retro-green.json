@@ -1,0 +1,17 @@
+{
+  "name": "retro-green",
+  "description": "Classic phosphor green CRT terminal",
+  "colors": {
+    "active": "#33ff00",
+    "idle": "#003300",
+    "critical": "#ff3300",
+    "border": "#1a8c00",
+    "text": "#33ff00",
+    "background": "#001a00",
+    "accent": "#66ff33",
+    "warning": "#cccc00",
+    "success": "#33ff00",
+    "header": "#66ff33",
+    "muted": "#196600"
+  }
+}

@@ -1,0 +1,16 @@
+interval: 60
+maxParallel: 1
+cloudModel: glm-5.1
+localModel: qwen3.5-tools
+openspecBin: /home/jericho/zion/apps/openspec/bin/openspec.js
+hermesBin: hermes
+dataDir: /tmp/openspec_aipm
+
+projects:
+  - name: aipm-test-web
+    path: /home/jericho/zion/projects/aipm/repos/aipm-test-web
+    language: javascript
+    testCommand: node --test test/*.test.js
+    protectedFiles:
+      - package.json
+    specDriven: true

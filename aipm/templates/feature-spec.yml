@@ -1,0 +1,78 @@
+name: Feature Specification
+description: Propose a new feature with spec-driven structure
+labels: ["spec-defined", "autospec"]
+body:
+  - type: textarea
+    id: why
+    attributes:
+      label: Why
+      description: Why is this change needed?
+      placeholder: "Users need X because..."
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What Changes
+      description: What is being changed?
+      placeholder: "We will add Y to Z..."
+    validations:
+      required: true
+  - type: textarea
+    id: success-criteria
+    attributes:
+      label: Success Criteria
+      description: How do we know it's done?
+      placeholder: "- [ ] Criterion 1\n- [ ] Criterion 2"
+    validations:
+      required: false
+  - type: textarea
+    id: risks
+    attributes:
+      label: Risks
+      description: Potential risks or drawbacks
+      placeholder: "- Risk 1\n- Risk 2"
+    validations:
+      required: false
+  - type: textarea
+    id: requirements
+    attributes:
+      label: Requirements
+      description: Formal requirements (MUST/SHALL/SHOULD/MAY)
+      placeholder: |
+        ### REQ-01: Description
+        - **Capability**: ...
+        - **Strength**: MUST
+        - **Given**: ...
+        - **When**: ...
+        - **Then**: ...
+    validations:
+      required: false
+  - type: textarea
+    id: design
+    attributes:
+      label: Design
+      description: Architecture and file changes
+      placeholder: |
+        ## Architecture Overview
+        ...
+
+        ## File Changes
+        - **create** `path/to/file.py`: Description
+        - **modify** `path/to/existing.py`: Description
+    validations:
+      required: false
+  - type: textarea
+    id: tasks
+    attributes:
+      label: Tasks
+      description: Implementation tasks
+      placeholder: |
+        ### [ ] TASK-01: Description
+        - **Component**: core
+        - **Files**: file1.py, file2.py
+        - **Depends on**: (none)
+        - [ ] 1. Step one
+        - [ ] 2. Step two
+    validations:
+      required: false
