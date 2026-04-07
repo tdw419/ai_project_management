@@ -3,7 +3,7 @@ use serde::Deserialize;
 use sqlx::query_as;
 use uuid::Uuid;
 use crate::{AppError, AppResult, SharedState};
-use crate::db::models::{Issue, IssueComment, CreateIssueRequest, UpdateIssueRequest, CheckoutRequest, CreateCommentRequest};
+use crate::db::models::{Issue, IssueComment, IssueOutcome, CreateIssueRequest, UpdateIssueRequest, CheckoutRequest, CreateCommentRequest, VerifyOutcomeRequest};
 use crate::state_machine;
 
 #[derive(Debug, Deserialize)]
@@ -57,9 +57,28 @@ pub async fn list(
 pub async fn get(
     State(state): State<SharedState>,
     Path(iid): Path<String>,
-) -> AppResult<Json<Issue>> {
+) -> AppResult<Json<serde_json::Value>> {
     let issue = resolve_issue(&state, &iid).await?;
-    Ok(Json(issue))
+
+    // Fetch latest outcome for this issue (if any)
+    let latest_outcome = query_as::<_, IssueOutcome>(
+        "SELECT * FROM issue_outcomes WHERE issue_id = ? ORDER BY created_at DESC LIMIT 1"
+    )
+        .bind(&issue.id)
+        .fetch_optional(&state.pool)
+        .await?;
+
+    let mut issue_json = serde_json::to_value(&issue)
+        .map_err(|e| crate::error::AppError::Internal(format!("serialize issue: {}", e)))?;
+
+    if let Some(obj) = issue_json.as_object_mut() {
+        obj.insert("latest_outcome".to_string(), match latest_outcome {
+            Some(o) => serde_json::to_value(o).unwrap_or(serde_json::Value::Null),
+            None => serde_json::Value::Null,
+        });
+    }
+
+    Ok(Json(issue_json))
 }
 
 pub async fn create(
@@ -399,6 +418,103 @@ pub async fn blockers(
         "blocked": !unresolved.is_empty(),
         "allDependencies": blocked_by,
     })))
+}
+
+/// POST /api/issues/{iid}/verify -- harness calls this after completing work.
+pub async fn verify(
+    State(state): State<SharedState>,
+    Path(iid): Path<String>,
+    Json(body): Json<VerifyOutcomeRequest>,
+) -> AppResult<Json<IssueOutcome>> {
+    let issue = resolve_issue(&state, &iid).await?;
+
+    let id = Uuid::new_v4().to_string();
+    let verified_at = chrono::Utc::now().to_rfc3339();
+
+    let tests_passed = body.tests_passed.unwrap_or(0);
+    let tests_failed = body.tests_failed.unwrap_or(0);
+    let tests_before = body.tests_before.unwrap_or(0);
+    let tests_after = body.tests_after.unwrap_or(0);
+    let files_changed = serde_json::to_string(&body.files_changed.unwrap_or_default())
+        .unwrap_or_else(|_| "[]".to_string());
+    let files_added = serde_json::to_string(&body.files_added.unwrap_or_default())
+        .unwrap_or_else(|_| "[]".to_string());
+    let files_removed = serde_json::to_string(&body.files_removed.unwrap_or_default())
+        .unwrap_or_else(|_| "[]".to_string());
+    let import_errors = serde_json::to_string(&body.import_errors.unwrap_or_default())
+        .unwrap_or_else(|_| "[]".to_string());
+    let build_success = body.build_success.unwrap_or(false);
+    let success = body.success.unwrap_or(false);
+    let summary = body.summary.unwrap_or_default();
+    let raw_output = body.raw_output;
+    let duration_ms = body.duration_ms.unwrap_or(0);
+
+    sqlx::query(
+        "INSERT INTO issue_outcomes (id, issue_id, verified_at, tests_passed, tests_failed,
+         tests_before, tests_after, files_changed, files_added, files_removed, import_errors,
+         build_success, success, summary, raw_output, duration_ms)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    )
+        .bind(&id)
+        .bind(&issue.id)
+        .bind(&verified_at)
+        .bind(tests_passed)
+        .bind(tests_failed)
+        .bind(tests_before)
+        .bind(tests_after)
+        .bind(&files_changed)
+        .bind(&files_added)
+        .bind(&files_removed)
+        .bind(&import_errors)
+        .bind(build_success)
+        .bind(success)
+        .bind(&summary)
+        .bind(&raw_output)
+        .bind(duration_ms)
+        .execute(&state.pool)
+        .await?;
+
+    // Log warnings for failures
+    if tests_failed > 0 || !build_success {
+        tracing::warn!(
+            issue_id = %issue.id,
+            identifier = %issue.identifier.as_deref().unwrap_or("unknown"),
+            tests_failed,
+            build_success,
+            "Outcome verification: issue has failures"
+        );
+    }
+
+    let outcome = query_as::<_, IssueOutcome>("SELECT * FROM issue_outcomes WHERE id = ?")
+        .bind(&id)
+        .fetch_one(&state.pool)
+        .await?;
+
+    log_activity(&state, &issue.company_id, "agent", "harness", "issue.verified", "issue", &issue.id,
+        Some(serde_json::json!({
+            "outcome_id": id,
+            "success": success,
+            "tests_passed": tests_passed,
+            "tests_failed": tests_failed,
+        }).to_string())
+    ).await;
+
+    Ok(Json(outcome))
+}
+
+/// GET /api/issues/{iid}/outcomes -- all outcome records for an issue.
+pub async fn list_outcomes(
+    State(state): State<SharedState>,
+    Path(iid): Path<String>,
+) -> AppResult<Json<Vec<IssueOutcome>>> {
+    let issue = resolve_issue(&state, &iid).await?;
+    let outcomes = query_as::<_, IssueOutcome>(
+        "SELECT * FROM issue_outcomes WHERE issue_id = ? ORDER BY created_at DESC"
+    )
+        .bind(&issue.id)
+        .fetch_all(&state.pool)
+        .await?;
+    Ok(Json(outcomes))
 }
 
 // -- Helpers --

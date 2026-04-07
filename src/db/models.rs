@@ -341,6 +341,46 @@ pub struct ParsedChange {
     pub description: String,
 }
 
+// -- Outcome --
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct IssueOutcome {
+    pub id: String,
+    pub issue_id: String,
+    pub verified_at: String,
+    pub tests_passed: i64,
+    pub tests_failed: i64,
+    pub tests_before: i64,
+    pub tests_after: i64,
+    pub files_changed: String,  // JSON array
+    pub files_added: String,    // JSON array
+    pub files_removed: String,  // JSON array
+    pub import_errors: String,  // JSON array
+    pub build_success: bool,
+    pub success: bool,
+    pub summary: String,
+    pub raw_output: Option<String>,
+    pub duration_ms: i64,
+    pub created_at: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct VerifyOutcomeRequest {
+    pub tests_passed: Option<i64>,
+    pub tests_failed: Option<i64>,
+    pub tests_before: Option<i64>,
+    pub tests_after: Option<i64>,
+    pub files_changed: Option<Vec<String>>,
+    pub files_added: Option<Vec<String>>,
+    pub files_removed: Option<Vec<String>>,
+    pub import_errors: Option<Vec<String>>,
+    pub build_success: Option<bool>,
+    pub success: Option<bool>,
+    pub summary: Option<String>,
+    pub raw_output: Option<String>,
+    pub duration_ms: Option<i64>,
+}
+
 // -- Spec Request DTOs --
 
 #[derive(Debug, Deserialize)]

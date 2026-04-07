@@ -180,6 +180,52 @@ pub async fn dashboard(
         }));
     }
 
+    // --- P9: Outcome verification stats ---
+    let total_outcomes: (i64,) = sqlx::query_as(
+        "SELECT COUNT(*) FROM issue_outcomes io JOIN issues i ON io.issue_id = i.id WHERE i.company_id = ?"
+    )
+        .bind(&cid)
+        .fetch_one(&state.pool)
+        .await
+        .unwrap_or((0,));
+
+    let successful_outcomes: (i64,) = sqlx::query_as(
+        "SELECT COUNT(*) FROM issue_outcomes io JOIN issues i ON io.issue_id = i.id WHERE i.company_id = ? AND io.success = 1"
+    )
+        .bind(&cid)
+        .fetch_one(&state.pool)
+        .await
+        .unwrap_or((0,));
+
+    let verification_rate = if total_outcomes.0 > 0 {
+        (successful_outcomes.0 as f64 / total_outcomes.0 as f64 * 100.0 * 10.0).round() / 10.0
+    } else {
+        0.0
+    };
+
+    let avg_test_delta: (f64,) = sqlx::query_as(
+        "SELECT COALESCE(AVG(CAST(tests_after - tests_before AS REAL)), 0.0) FROM issue_outcomes io JOIN issues i ON io.issue_id = i.id WHERE i.company_id = ?"
+    )
+        .bind(&cid)
+        .fetch_one(&state.pool)
+        .await
+        .unwrap_or((0.0,));
+
+    let recent_failures: Vec<(String, String, String)> = sqlx::query_as(
+        "SELECT i.identifier, i.title, io.summary FROM issue_outcomes io \
+         JOIN issues i ON io.issue_id = i.id \
+         WHERE i.company_id = ? AND io.success = 0 \
+         ORDER BY io.created_at DESC LIMIT 5"
+    )
+        .bind(&cid)
+        .fetch_all(&state.pool)
+        .await
+        .unwrap_or_default();
+
+    let recent_failures_json: Vec<Value> = recent_failures.into_iter().map(|(ident, title, summary)| {
+        json!({"identifier": ident, "title": title, "summary": summary})
+    }).collect();
+
     Ok(Json(json!({
         "companyId": cid,
         "agents": agents,
@@ -189,6 +235,13 @@ pub async fn dashboard(
             "agentUtilization": utilization_pct,
             "bottlenecks": bottlenecks_json,
             "blockerChains": blocker_chains,
+        },
+        "outcomes": {
+            "total": total_outcomes.0,
+            "successful": successful_outcomes.0,
+            "verificationRate": verification_rate,
+            "avgTestDelta": avg_test_delta.0,
+            "recentFailures": recent_failures_json,
         }
     })))
 }

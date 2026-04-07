@@ -1889,3 +1889,206 @@ async fn test_validation_company_bad_prefix() {
     assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
     assert!(body["error"].as_str().unwrap().contains("issue_prefix"));
 }
+
+// ============================================================
+// P9: Outcome Verification
+// ============================================================
+
+#[tokio::test]
+async fn test_verify_outcome_creates_record() {
+    let (mut app, _) = test_app().await;
+
+    // Create company + issue
+    let (_, company) = send(&mut app, "POST", "/api/companies", json!({
+        "name": "Outcome Test Co"
+    })).await;
+    let cid = company["id"].as_str().unwrap();
+
+    let (_, issue) = send(&mut app, "POST", &format!("/api/companies/{}/issues", cid), json!({
+        "title": "Test issue for outcomes"
+    })).await;
+    let issue_id = issue["id"].as_str().unwrap();
+
+    // POST verify
+    let (status, outcome) = send(&mut app, "POST", &format!("/api/issues/{}/verify", issue_id), json!({
+        "tests_passed": 782,
+        "tests_failed": 0,
+        "tests_before": 780,
+        "tests_after": 782,
+        "files_changed": ["src/gasm.rs"],
+        "build_success": true,
+        "success": true,
+        "summary": "SUCCESS | 782 passed, 0 failed"
+    })).await;
+
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(outcome["tests_passed"], 782);
+    assert_eq!(outcome["tests_failed"], 0);
+    assert_eq!(outcome["tests_before"], 780);
+    assert_eq!(outcome["tests_after"], 782);
+    assert_eq!(outcome["success"], true);
+    assert_eq!(outcome["build_success"], true);
+    assert_eq!(outcome["summary"], "SUCCESS | 782 passed, 0 failed");
+    assert!(outcome["id"].is_string());
+    assert!(outcome["verified_at"].is_string());
+}
+
+#[tokio::test]
+async fn test_verify_outcome_by_identifier() {
+    let (mut app, _) = test_app().await;
+
+    let (_, company) = send(&mut app, "POST", "/api/companies", json!({
+        "name": "Ident Co",
+        "issue_prefix": "ID"
+    })).await;
+    let cid = company["id"].as_str().unwrap();
+
+    let (_, issue) = send(&mut app, "POST", &format!("/api/companies/{}/issues", cid), json!({
+        "title": "Verify by identifier"
+    })).await;
+    let identifier = issue["identifier"].as_str().unwrap();
+
+    // POST verify using identifier (GEO-N) instead of UUID
+    let (status, outcome) = send(&mut app, "POST", &format!("/api/issues/{}/verify", identifier), json!({
+        "tests_passed": 10,
+        "tests_failed": 2,
+        "build_success": false,
+        "success": false,
+        "summary": "FAILED | 2 tests failed"
+    })).await;
+
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(outcome["tests_passed"], 10);
+    assert_eq!(outcome["tests_failed"], 2);
+    assert_eq!(outcome["success"], false);
+}
+
+#[tokio::test]
+async fn test_list_outcomes_for_issue() {
+    let (mut app, _) = test_app().await;
+
+    let (_, company) = send(&mut app, "POST", "/api/companies", json!({
+        "name": "List Outcomes Co"
+    })).await;
+    let cid = company["id"].as_str().unwrap();
+
+    let (_, issue) = send(&mut app, "POST", &format!("/api/companies/{}/issues", cid), json!({
+        "title": "Multi outcome"
+    })).await;
+    let issue_id = issue["id"].as_str().unwrap();
+
+    // First verify (failure)
+    send(&mut app, "POST", &format!("/api/issues/{}/verify", issue_id), json!({
+        "tests_passed": 5,
+        "tests_failed": 3,
+        "success": false,
+        "summary": "FAILED"
+    })).await;
+
+    // Second verify (success)
+    send(&mut app, "POST", &format!("/api/issues/{}/verify", issue_id), json!({
+        "tests_passed": 8,
+        "tests_failed": 0,
+        "success": true,
+        "summary": "SUCCESS"
+    })).await;
+
+    // GET outcomes -- should return both
+    let (status, outcomes) = get(&mut app, &format!("/api/issues/{}/outcomes", issue_id)).await;
+    assert_eq!(status, StatusCode::OK);
+    let arr = outcomes.as_array().unwrap();
+    assert_eq!(arr.len(), 2);
+    // One success, one failure (order may vary since timestamps land in same second)
+    let success_count = arr.iter().filter(|o| o["success"] == true).count();
+    let fail_count = arr.iter().filter(|o| o["success"] == false).count();
+    assert_eq!(success_count, 1);
+    assert_eq!(fail_count, 1);
+}
+
+#[tokio::test]
+async fn test_issue_get_includes_latest_outcome() {
+    let (mut app, _) = test_app().await;
+
+    let (_, company) = send(&mut app, "POST", "/api/companies", json!({
+        "name": "Latest Outcome Co"
+    })).await;
+    let cid = company["id"].as_str().unwrap();
+
+    let (_, issue) = send(&mut app, "POST", &format!("/api/companies/{}/issues", cid), json!({
+        "title": "Check latest outcome"
+    })).await;
+    let issue_id = issue["id"].as_str().unwrap();
+
+    // Before verification: latest_outcome should be null
+    let (status, body) = get(&mut app, &format!("/api/issues/{}", issue_id)).await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(body["latest_outcome"], Value::Null);
+
+    // Add a verify
+    send(&mut app, "POST", &format!("/api/issues/{}/verify", issue_id), json!({
+        "tests_passed": 50,
+        "success": true,
+        "summary": "OK"
+    })).await;
+
+    // After verification: latest_outcome should be populated
+    let (status, body) = get(&mut app, &format!("/api/issues/{}", issue_id)).await;
+    assert_eq!(status, StatusCode::OK);
+    assert!(body["latest_outcome"].is_object());
+    assert_eq!(body["latest_outcome"]["tests_passed"], 50);
+    assert_eq!(body["latest_outcome"]["success"], true);
+}
+
+#[tokio::test]
+async fn test_dashboard_includes_outcome_stats() {
+    let (mut app, _) = test_app().await;
+
+    let (_, company) = send(&mut app, "POST", "/api/companies", json!({
+        "name": "Dashboard Outcome Co"
+    })).await;
+    let cid = company["id"].as_str().unwrap();
+
+    let (_, issue) = send(&mut app, "POST", &format!("/api/companies/{}/issues", cid), json!({
+        "title": "Dashboard outcome"
+    })).await;
+    let issue_id = issue["id"].as_str().unwrap();
+
+    // No outcomes yet
+    let (_, body) = get(&mut app, &format!("/api/companies/{}/dashboard", cid)).await;
+    assert_eq!(body["outcomes"]["total"], 0);
+    assert_eq!(body["outcomes"]["verificationRate"], 0.0);
+
+    // Add successful outcome
+    send(&mut app, "POST", &format!("/api/issues/{}/verify", issue_id), json!({
+        "tests_passed": 100,
+        "tests_before": 95,
+        "tests_after": 100,
+        "success": true,
+        "summary": "SUCCESS"
+    })).await;
+
+    let (_, body) = get(&mut app, &format!("/api/companies/{}/dashboard", cid)).await;
+    assert_eq!(body["outcomes"]["total"], 1);
+    assert_eq!(body["outcomes"]["successful"], 1);
+    assert_eq!(body["outcomes"]["verificationRate"], 100.0);
+    assert!(body["outcomes"]["avgTestDelta"].as_f64().unwrap() > 0.0);
+    assert!(body["outcomes"]["recentFailures"].as_array().unwrap().is_empty());
+}
+
+#[tokio::test]
+async fn test_verify_nonexistent_issue_404() {
+    let (mut app, _) = test_app().await;
+
+    let (status, _) = send(&mut app, "POST", "/api/issues/nonexistent/verify", json!({
+        "success": true
+    })).await;
+    assert_eq!(status, StatusCode::NOT_FOUND);
+}
+
+#[tokio::test]
+async fn test_outcomes_for_nonexistent_issue_404() {
+    let (mut app, _) = test_app().await;
+
+    let (status, _) = get(&mut app, "/api/issues/nonexistent/outcomes").await;
+    assert_eq!(status, StatusCode::NOT_FOUND);
+}

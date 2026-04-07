@@ -55,7 +55,7 @@ Migration script (`migrate_from_paperclip.py`).
 
 ## Active Phases
 
-### P9 -- Outcome Verification
+### P9 -- Outcome Verification (DONE)
 
 Goal: stop trusting agents. Verify work actually landed.
 
@@ -63,7 +63,7 @@ Right now an agent marks an issue `done` and the forge believes it. No test
 results, no file change tracking, no verification. An agent could submit
 broken code and nobody would know until the next human checks.
 
-- [ ] **P9-A: outcomes table** -- migration 007:
+- [x] **P9-A: outcomes table** -- migration 007:
       ```sql
       CREATE TABLE issue_outcomes (
           id TEXT PRIMARY KEY,
@@ -86,7 +86,7 @@ broken code and nobody would know until the next human checks.
       );
       ```
 
-- [ ] **P9-B: verify endpoint** -- `POST /api/issues/{iid}/verify`
+- [x] **P9-B: verify endpoint** -- `POST /api/issues/{iid}/verify`
       The harness calls this after completing work. Body:
       ```json
       {
@@ -105,15 +105,15 @@ broken code and nobody would know until the next human checks.
       logs a warning. Does NOT change issue status (that's the agent's job).
       The outcome is data for the forge to reason about.
 
-- [ ] **P9-C: outcome on issue GET** -- include latest outcome in issue
+- [x] **P9-C: outcome on issue GET** -- include latest outcome in issue
       response. New field: `latest_outcome: { ... } | null`. Let any
       consumer see whether the last attempt actually worked.
 
-- [ ] **P9-D: get outcomes** -- `GET /api/issues/{iid}/outcomes` returns
+- [x] **P9-D: get outcomes** -- `GET /api/issues/{iid}/outcomes` returns
       all outcome records for an issue (one per attempt). Shows whether
       the agent is making progress or thrashing.
 
-- [ ] **P9-E: outcome summary on dashboard** -- add outcome stats to
+- [x] **P9-E: outcome summary on dashboard** -- add outcome stats to
       the dashboard endpoint: verification rate, avg test delta,
       recent failures.
 
