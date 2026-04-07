@@ -44,6 +44,9 @@ pub fn build_router(state: SharedState, rate_max: u32, rate_refill: u32, cors_or
         // Outcome verification
         .route("/api/issues/{iid}/verify", post(crate::routes::issues::verify))
         .route("/api/issues/{iid}/outcomes", get(crate::routes::issues::list_outcomes))
+        // Strategy templates
+        .route("/api/strategies", get(crate::routes::strategies::list))
+        .route("/api/strategies/{name}/prompt", get(crate::routes::strategies::get_prompt).patch(crate::routes::strategies::update_prompt))
         // Projects
         .route("/api/companies/{cid}/projects", get(crate::routes::projects::list))
         .route("/api/projects/{pid}", get(crate::routes::projects::get))

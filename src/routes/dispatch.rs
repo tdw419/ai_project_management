@@ -75,6 +75,39 @@ pub async fn dispatch(
         agent.id,
     );
 
+    // Determine effective strategy: if issue has prior failed outcomes, pivot
+    let outcome_count: (i64,) = sqlx::query_as(
+        "SELECT COUNT(*) FROM issue_outcomes WHERE issue_id = ? AND success = 0"
+    )
+        .bind(&issue.id)
+        .fetch_one(&state.pool)
+        .await
+        .unwrap_or((0,));
+
+    let effective_strategy = if outcome_count.0 > 0 {
+        // Prior failures exist -- pivot strategy
+        let pivoted = crate::db::models::pivot_strategy(issue.strategy.as_deref());
+        // Update issue with pivoted strategy
+        sqlx::query("UPDATE issues SET strategy = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?")
+            .bind(&pivoted)
+            .bind(&issue.id)
+            .execute(&state.pool)
+            .await?;
+        pivoted
+    } else {
+        issue.strategy.clone().unwrap_or_else(|| "surgeon".to_string())
+    };
+
+    // Fetch prompt template for the strategy
+    let prompt_template = sqlx::query_as::<_, crate::db::models::PromptTemplate>(
+        "SELECT * FROM prompt_templates WHERE strategy = ?"
+    )
+        .bind(&effective_strategy)
+        .fetch_optional(&state.pool)
+        .await
+        .ok()
+        .flatten();
+
     Ok(Json(serde_json::json!({
         "dispatched": true,
         "agent": {
@@ -87,5 +120,9 @@ pub async fn dispatch(
             "identifier": issue.identifier,
             "title": issue.title,
         },
+        "strategy": effective_strategy,
+        "strategyPivoted": outcome_count.0 > 0,
+        "prompt": prompt_template.map(|t| t.prompt).unwrap_or_default(),
+        "priorAttempts": outcome_count.0,
     })))
 }

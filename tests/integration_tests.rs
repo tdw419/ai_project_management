@@ -2092,3 +2092,202 @@ async fn test_outcomes_for_nonexistent_issue_404() {
     let (status, _) = get(&mut app, "/api/issues/nonexistent/outcomes").await;
     assert_eq!(status, StatusCode::NOT_FOUND);
 }
+
+// ============================================================
+// P10: Strategy-Aware Dispatch
+// ============================================================
+
+#[tokio::test]
+async fn test_strategy_auto_detect_scout() {
+    let (mut app, _) = test_app().await;
+    let (_, company) = send(&mut app, "POST", "/api/companies", json!({
+        "name": "Strategy Test Co"
+    })).await;
+    let cid = company["id"].as_str().unwrap();
+
+    let (_, issue) = send(&mut app, "POST", &format!("/api/companies/{}/issues", cid), json!({
+        "title": "Investigate memory leak in parser"
+    })).await;
+    assert_eq!(issue["strategy"], "scout");
+}
+
+#[tokio::test]
+async fn test_strategy_auto_detect_fixer() {
+    let (mut app, _) = test_app().await;
+    let (_, company) = send(&mut app, "POST", "/api/companies", json!({
+        "name": "Fixer Test Co"
+    })).await;
+    let cid = company["id"].as_str().unwrap();
+
+    let (_, issue) = send(&mut app, "POST", &format!("/api/companies/{}/issues", cid), json!({
+        "title": "Fix broken import path"
+    })).await;
+    assert_eq!(issue["strategy"], "fixer");
+}
+
+#[tokio::test]
+async fn test_strategy_auto_detect_builder() {
+    let (mut app, _) = test_app().await;
+    let (_, company) = send(&mut app, "POST", "/api/companies", json!({
+        "name": "Builder Test Co"
+    })).await;
+    let cid = company["id"].as_str().unwrap();
+
+    let (_, issue) = send(&mut app, "POST", &format!("/api/companies/{}/issues", cid), json!({
+        "title": "Implement new auth module"
+    })).await;
+    assert_eq!(issue["strategy"], "builder");
+}
+
+#[tokio::test]
+async fn test_strategy_auto_detect_refactor() {
+    let (mut app, _) = test_app().await;
+    let (_, company) = send(&mut app, "POST", "/api/companies", json!({
+        "name": "Refactor Test Co"
+    })).await;
+    let cid = company["id"].as_str().unwrap();
+
+    let (_, issue) = send(&mut app, "POST", &format!("/api/companies/{}/issues", cid), json!({
+        "title": "Refactor database layer"
+    })).await;
+    assert_eq!(issue["strategy"], "refactor");
+}
+
+#[tokio::test]
+async fn test_strategy_default_surgeon() {
+    let (mut app, _) = test_app().await;
+    let (_, company) = send(&mut app, "POST", "/api/companies", json!({
+        "name": "Surgeon Test Co"
+    })).await;
+    let cid = company["id"].as_str().unwrap();
+
+    let (_, issue) = send(&mut app, "POST", &format!("/api/companies/{}/issues", cid), json!({
+        "title": "Update configuration"
+    })).await;
+    assert_eq!(issue["strategy"], "surgeon");
+}
+
+#[tokio::test]
+async fn test_dispatch_includes_strategy() {
+    let (mut app, _) = test_app().await;
+    let (_, company) = send(&mut app, "POST", "/api/companies", json!({
+        "name": "Dispatch Strategy Co"
+    })).await;
+    let cid = company["id"].as_str().unwrap();
+
+    // Create agent
+    let (_, agent) = send(&mut app, "POST", &format!("/api/companies/{}/agents", cid), json!({
+        "name": "Test Agent",
+        "role": "engineer"
+    })).await;
+    let agent_id = agent["id"].as_str().unwrap();
+
+    // Create issue
+    let (_, issue) = send(&mut app, "POST", &format!("/api/companies/{}/issues", cid), json!({
+        "title": "Fix crash on startup"
+    })).await;
+    let issue_id = issue["id"].as_str().unwrap();
+
+    // Dispatch
+    let (status, body) = send(&mut app, "POST", &format!("/api/companies/{}/dispatch", cid), json!({
+        "agent_id": agent_id,
+        "issue_id": issue_id
+    })).await;
+
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(body["strategy"], "fixer");
+    assert_eq!(body["strategyPivoted"], false);
+    assert_eq!(body["priorAttempts"], 0);
+    assert!(body["prompt"].as_str().unwrap().contains("reproduce"));
+}
+
+#[tokio::test]
+async fn test_dispatch_strategy_pivots_on_failure() {
+    let (mut app, _) = test_app().await;
+    let (_, company) = send(&mut app, "POST", "/api/companies", json!({
+        "name": "Pivot Strategy Co"
+    })).await;
+    let cid = company["id"].as_str().unwrap();
+
+    let (_, agent) = send(&mut app, "POST", &format!("/api/companies/{}/agents", cid), json!({
+        "name": "Test Agent",
+        "role": "engineer"
+    })).await;
+    let agent_id = agent["id"].as_str().unwrap();
+
+    let (_, issue) = send(&mut app, "POST", &format!("/api/companies/{}/issues", cid), json!({
+        "title": "Fix crash on startup"
+    })).await;
+    let issue_id = issue["id"].as_str().unwrap();
+
+    // First dispatch
+    let (_, _) = send(&mut app, "POST", &format!("/api/companies/{}/dispatch", cid), json!({
+        "agent_id": agent_id,
+        "issue_id": issue_id
+    })).await;
+
+    // Record a failed outcome
+    send(&mut app, "POST", &format!("/api/issues/{}/verify", issue_id), json!({
+        "success": false,
+        "summary": "FAILED"
+    })).await;
+
+    // Reset issue back to todo for re-dispatch
+    send(&mut app, "PATCH", &format!("/api/issues/{}", issue_id), json!({
+        "status": "todo"
+    })).await;
+
+    // Second dispatch -- should pivot strategy
+    let (status, body) = send(&mut app, "POST", &format!("/api/companies/{}/dispatch", cid), json!({
+        "agent_id": agent_id,
+        "issue_id": issue_id
+    })).await;
+
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(body["strategy"], "scout"); // pivoted from fixer to scout
+    assert_eq!(body["strategyPivoted"], true);
+    assert_eq!(body["priorAttempts"], 1);
+}
+
+#[tokio::test]
+async fn test_strategies_list() {
+    let (mut app, _) = test_app().await;
+    let (status, body) = get(&mut app, "/api/strategies").await;
+    assert_eq!(status, StatusCode::OK);
+    let arr = body.as_array().unwrap();
+    assert_eq!(arr.len(), 5);
+    let strategies: Vec<&str> = arr.iter().map(|t| t["strategy"].as_str().unwrap()).collect();
+    assert!(strategies.contains(&"scout"));
+    assert!(strategies.contains(&"surgeon"));
+    assert!(strategies.contains(&"builder"));
+    assert!(strategies.contains(&"fixer"));
+    assert!(strategies.contains(&"refactor"));
+}
+
+#[tokio::test]
+async fn test_strategies_get_prompt() {
+    let (mut app, _) = test_app().await;
+    let (status, body) = get(&mut app, "/api/strategies/scout/prompt").await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(body["strategy"], "scout");
+    assert!(body["prompt"].as_str().unwrap().contains("research"));
+
+    // Unknown strategy
+    let (status, _) = get(&mut app, "/api/strategies/unknown/prompt").await;
+    assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+}
+
+#[tokio::test]
+async fn test_strategies_update_prompt() {
+    let (mut app, _) = test_app().await;
+
+    let (status, body) = send(&mut app, "PATCH", "/api/strategies/scout/prompt", json!({
+        "prompt": "Custom scout prompt"
+    })).await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(body["prompt"], "Custom scout prompt");
+
+    // Verify it persisted
+    let (_, body) = get(&mut app, "/api/strategies/scout/prompt").await;
+    assert_eq!(body["prompt"], "Custom scout prompt");
+}

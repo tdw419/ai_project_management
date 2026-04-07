@@ -52,6 +52,7 @@ pub struct Issue {
     pub origin_kind: String,
     pub origin_id: Option<String>,
     pub blocked_by: Option<String>, // JSON array
+    pub strategy: Option<String>,
     pub started_at: Option<String>,
     pub completed_at: Option<String>,
     pub created_at: String,
@@ -394,4 +395,60 @@ pub struct CreateSpecRequest {
 pub struct ImportSpecRequest {
     /// Which change indices to import (0-based). Empty = import all.
     pub indices: Option<Vec<i64>>,
+}
+
+// -- Strategy --
+
+/// Valid strategy names.
+pub const STRATEGIES: &[&str] = &["scout", "surgeon", "builder", "fixer", "refactor"];
+
+/// Auto-detect strategy from issue title and description.
+/// Returns the detected strategy name, or "surgeon" as default.
+pub fn detect_strategy(title: &str, description: Option<&str>) -> String {
+    let text = format!("{} {}", title.to_lowercase(), description.unwrap_or("").to_lowercase());
+
+    // Order matters: more specific patterns first
+    if contains_any(&text, &["investigate", "analyze", "explore", "research", "audit", "review", "understand"]) {
+        return "scout".to_string();
+    }
+    if contains_any(&text, &["fix", "bug", "error", "broken", "crash", "fail", "regression", "issue"]) {
+        return "fixer".to_string();
+    }
+    if contains_any(&text, &["create", "new", "build", "implement", "add", "scaffold", "init"]) {
+        return "builder".to_string();
+    }
+    if contains_any(&text, &["refactor", "restructure", "reorganize", "clean up", "cleanup", "simplify"]) {
+        return "refactor".to_string();
+    }
+    // Default: surgeon for targeted edits
+    "surgeon".to_string()
+}
+
+/// Pivot strategy on retry -- non-scout strategies fall back to scout.
+pub fn pivot_strategy(current: Option<&str>) -> String {
+    match current {
+        Some("scout") => "surgeon".to_string(), // already scouted, try surgery
+        Some("surgeon") | Some("builder") | Some("fixer") | Some("refactor") => "scout".to_string(),
+        _ => "scout".to_string(),
+    }
+}
+
+fn contains_any(text: &str, keywords: &[&str]) -> bool {
+    keywords.iter().any(|k| text.contains(k))
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct PromptTemplate {
+    pub id: String,
+    pub strategy: String,
+    pub prompt: String,
+    pub description: String,
+    pub created_at: String,
+    pub updated_at: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdatePromptTemplateRequest {
+    pub prompt: Option<String>,
+    pub description: Option<String>,
 }

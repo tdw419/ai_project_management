@@ -129,10 +129,16 @@ pub async fn create(
     // Issues with blockers start in 'backlog'; unblocked issues start in 'todo'
     let initial_status = if has_blockers { "backlog" } else { "todo" };
 
+    // Auto-detect strategy from title/description
+    let strategy = crate::db::models::detect_strategy(
+        &body.title,
+        body.description.as_deref(),
+    );
+
     sqlx::query(
         "INSERT INTO issues (id, company_id, project_id, parent_id, title, description, status, priority,
-         assignee_agent_id, identifier, issue_number, origin_kind, origin_id, blocked_by)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+         assignee_agent_id, identifier, issue_number, origin_kind, origin_id, blocked_by, strategy)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     )
         .bind(&id)
         .bind(&cid)
@@ -148,6 +154,7 @@ pub async fn create(
         .bind(&origin_kind)
         .bind(&body.origin_id)
         .bind(&blocked_by)
+        .bind(&strategy)
         .execute(&state.pool)
         .await?;
 

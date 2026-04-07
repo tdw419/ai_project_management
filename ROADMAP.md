@@ -117,7 +117,7 @@ broken code and nobody would know until the next human checks.
       the dashboard endpoint: verification rate, avg test delta,
       recent failures.
 
-### P10 -- Strategy-Aware Dispatch
+### P10 -- Strategy-Aware Dispatch (DONE)
 
 Goal: the forge recommends HOW to approach a task, not just WHAT the task is.
 
@@ -127,11 +127,11 @@ Right now every issue gets the same generic prompt. Strategy-aware dispatch
 means the harness can build better prompts and route to appropriate models
 (local for SCOUT, cloud for BUILDER).
 
-- [ ] **P10-A: strategy field on issues** -- add `strategy` column to issues
+- [x] **P10-A: strategy field on issues** -- add `strategy` column to issues
       table (TEXT, nullable). Values: `scout`, `surgeon`, `builder`, `fixer`,
       `refactor`, null (unspecified). Migration 008.
 
-- [ ] **P10-B: strategy auto-detection** -- when creating an issue without
+- [x] **P10-B: strategy auto-detection** -- when creating an issue without
       an explicit strategy, infer from title/description keywords:
       - "fix", "bug", "error" -> `fixer`
       - "investigate", "analyze", "explore" -> `scout`
@@ -140,11 +140,11 @@ means the harness can build better prompts and route to appropriate models
       - default: `surgeon`
       Store the detected strategy so the harness can use it.
 
-- [ ] **P10-C: strategy in dispatch response** -- when dispatch assigns an
+- [x] **P10-C: strategy in dispatch response** -- when dispatch assigns an
       issue, include `strategy` in the response body. The harness reads this
       and selects the appropriate prompt template and model.
 
-- [ ] **P10-D: strategy-specific prompt templates** -- store prompt templates
+- [x] **P10-D: strategy-specific prompt templates** -- store prompt templates
       per strategy in a new `prompt_templates` table or as config:
       - SCOUT: "Prioritize research and understanding before acting."
       - SURGEON: "Make targeted, minimal edits to existing code."
@@ -153,7 +153,7 @@ means the harness can build better prompts and route to appropriate models
       - REFACTOR: "Small steps, test after every change, revert if broken."
       The harness requests the template via `GET /api/strategies/{name}/prompt`.
 
-- [ ] **P10-E: retry strategy pivot** -- when an issue fails and gets
+- [x] **P10-E: retry strategy pivot** -- when an issue fails and gets
       reattempted, automatically shift strategy. Non-diagnostic strategies
       fall back to SCOUT on retry (investigate why it failed). Track the
       strategy used per attempt in the outcome record.
