@@ -506,6 +506,13 @@ pub async fn verify(
         }).to_string())
     ).await;
 
+    // P11-E: Recompute module difficulty in the background after each outcome
+    let bg_state = state.clone();
+    let bg_company = issue.company_id.clone();
+    tokio::spawn(async move {
+        crate::routes::learnings::recompute_module_difficulty(&bg_state, &bg_company).await;
+    });
+
     Ok(Json(outcome))
 }
 

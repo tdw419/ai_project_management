@@ -108,6 +108,9 @@ pub async fn dispatch(
         .ok()
         .flatten();
 
+    // P11-C: Inject relevant learnings into dispatch response
+    let learnings = crate::routes::learnings::get_learnings_for_dispatch(&state, &cid, &issue).await;
+
     Ok(Json(serde_json::json!({
         "dispatched": true,
         "agent": {
@@ -124,5 +127,6 @@ pub async fn dispatch(
         "strategyPivoted": outcome_count.0 > 0,
         "prompt": prompt_template.map(|t| t.prompt).unwrap_or_default(),
         "priorAttempts": outcome_count.0,
+        "learnings": learnings,
     })))
 }

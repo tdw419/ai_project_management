@@ -158,7 +158,7 @@ means the harness can build better prompts and route to appropriate models
       fall back to SCOUT on retry (investigate why it failed). Track the
       strategy used per attempt in the outcome record.
 
-### P11 -- Self-Improvement Loop
+### P11 -- Self-Improvement Loop (DONE)
 
 Goal: the forge learns from its history and gets better over time.
 
@@ -170,7 +170,7 @@ These learnings fed back into the strategist prompts.
 Geo-forge has the activity log and (after P9) outcome data. This phase closes
 the loop by aggregating that data into actionable learnings.
 
-- [ ] **P11-A: company learnings endpoint** --
+- [x] **P11-A: company learnings endpoint** --
       `GET /api/companies/{cid}/learnings` aggregates outcome history:
       - Overall success rate (outcomes where success=true / total outcomes)
       - Per-strategy success rate (scout vs surgeon vs builder vs fixer)
@@ -178,26 +178,25 @@ the loop by aggregating that data into actionable learnings.
       - Average issue duration (started_at -> completed_at)
       - Recent trend: improving / declining / stable (compare last 10 vs previous 10)
 
-- [ ] **P11-B: module difficulty tracking** -- aggregate outcomes by files
-      changed. Modules where agents frequently fail get flagged as "hard".
-      Modules where agents succeed get flagged as "easy". Return in the
-      learnings endpoint so the strategist can adapt.
+- [x] **P11-B: module difficulty tracking** -- `module_difficulty` table (migration 009).
+      Aggregates outcomes by `files_changed`. Files where agents fail >= 60% are
+      "hard", >= 30% are "medium", otherwise "easy". Returns in learnings endpoint
+      and standalone `GET /api/companies/{cid}/learnings/modules`.
 
-- [ ] **P11-C: learnings in dispatch response** -- when dispatch assigns
-      an issue, include relevant learnings: "this module has 60% failure
-      rate, consider smaller steps" or "similar issues took 45min avg".
-      The harness uses this to set expectations and adjust approach.
+- [x] **P11-C: learnings in dispatch response** -- dispatch response now includes
+      a `learnings` object with `overallSuccessRate`, `avgDurationMs`, and
+      `moduleWarnings` (checks if the issue description references known hard modules).
 
-- [ ] **P11-D: recommendations engine** -- from the learnings data, generate
-      actionable recommendations:
-      - "Stop proposing refactors to module X -- 3 failures in a row"
-      - "Fixer strategy has 90% success -- keep using it for bug issues"
-      - "Overall success rate declining -- propose smaller changes"
-      Exposed via the learnings endpoint as a `recommendations` array.
+- [x] **P11-D: recommendations engine** -- the learnings endpoint returns a
+      `recommendations` array with actionable entries:
+      - Trend-based: "declining" = critical, "improving" = info
+      - Strategy-based: high/low success rate strategies flagged
+      - Module-based: hard modules with 3+ failures get warnings
+      - General: low overall success rate triggers scoping advice
 
-- [ ] **P11-E: outcome-triggered learnings update** -- when a new outcome
-      is recorded (P9-B), recompute learnings in the background. The
-      learnings endpoint always returns fresh data.
+- [x] **P11-E: outcome-triggered learnings update** -- after every verify call,
+      `recompute_module_difficulty` runs in a background tokio task.
+      Manual trigger via `POST /api/companies/{cid}/learnings/recompute`.
 
 ### P12 -- Multi-Agent Coordination
 

@@ -68,6 +68,10 @@ pub fn build_router(state: SharedState, rate_max: u32, rate_refill: u32, cors_or
         .route("/api/routines/{rid}/runs", get(crate::routes::routines::list_runs))
         // Dispatch
         .route("/api/companies/{cid}/dispatch", post(crate::routes::dispatch::dispatch))
+        // Learnings (P11)
+        .route("/api/companies/{cid}/learnings", get(crate::routes::learnings::get_learnings))
+        .route("/api/companies/{cid}/learnings/modules", get(crate::routes::learnings::get_module_difficulty))
+        .route("/api/companies/{cid}/learnings/recompute", post(crate::routes::learnings::trigger_recompute))
         // Activity log
         .route("/api/companies/{cid}/activity", get(crate::routes::activity::list))
         // Alert rules
