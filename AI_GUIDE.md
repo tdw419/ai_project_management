@@ -254,6 +254,29 @@ POST /api/issues/{issue_id}/comments
 | DELETE | `/api/alert-rules/{rid}` | Delete alert rule |
 | POST | `/api/companies/{cid}/alerts/evaluate` | Evaluate all rules |
 
+### Outcome Verification
+
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/api/issues/{iid}/verify` | Submit outcome after work (tests, files, build) |
+| GET | `/api/issues/{iid}/outcomes` | All outcomes for an issue |
+
+### Strategy Templates
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/strategies` | List all strategy templates |
+| GET | `/api/strategies/{name}/prompt` | Get prompt for a strategy |
+| PATCH | `/api/strategies/{name}/prompt` | Update a strategy's prompt |
+
+### Learnings (Self-Improvement)
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/companies/{cid}/learnings` | Aggregated learnings (success rates, trends, recommendations) |
+| GET | `/api/companies/{cid}/learnings/modules` | Module difficulty tracking |
+| POST | `/api/companies/{cid}/learnings/recompute` | Recompute from outcome history |
+
 ## Common Patterns
 
 ### Create an issue with file constraints
