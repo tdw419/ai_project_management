@@ -19,9 +19,9 @@ pub struct InvokeResult {
 ///
 /// Two dispatch modes based on `adapter_type`:
 ///
-/// **hermes_local** -- Spawns a child process (default: `hermes` CLI).
+/// **hermes_local** -- Spawns a child process (default: `geo-harness` CLI).
 /// The agent's adapter_config JSON can contain:
-///   - `command`: override the command (default: "hermes")
+///   - `command`: override the command (default: "geo-harness")
 ///   - `args`: additional CLI arguments
 ///   - `env`: environment variables to set
 ///   - `working_dir`: working directory
@@ -190,7 +190,7 @@ pub async fn invoke_agent(
 
     let command = config.get("command")
         .and_then(|v| v.as_str())
-        .unwrap_or("hermes");
+        .unwrap_or("geo-harness");
 
     let mut args: Vec<String> = config.get("args")
         .and_then(|v| v.as_array())
