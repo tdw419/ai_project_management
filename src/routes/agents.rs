@@ -3,7 +3,7 @@ use serde::Deserialize;
 use sqlx::query_as;
 use uuid::Uuid;
 use crate::{AppError, AppResult, SharedState};
-use crate::db::models::{Agent, CreateAgentRequest, UpdateAgentRequest};
+use crate::db::models::{Agent, CreateAgentRequest, UpdateAgentRequest, RegisterAgentRequest};
 
 #[derive(Debug, Deserialize)]
 pub struct ListParams {
@@ -92,6 +92,200 @@ pub async fn create(
         .fetch_one(&state.pool)
         .await?;
     Ok(Json(agent))
+}
+
+/// Agent registration handshake.
+/// An agent announces itself with a capabilities manifest.
+/// GeoForge creates or re-activates the agent record, then assigns any
+/// backlogged todo issues matching the agent's role.
+///
+/// Returns the agent record + list of auto-assigned issues.
+pub async fn register(
+    State(state): State<SharedState>,
+    Path(cid): Path<String>,
+    Json(body): Json<RegisterAgentRequest>,
+) -> AppResult<Json<serde_json::Value>> {
+    let role = body.role.unwrap_or_else(|| "general".to_string());
+    let adapter_type = body.adapter_type.unwrap_or_else(|| "hermes_local".to_string());
+    let adapter_config = body.adapter_config
+        .map(|v| v.to_string())
+        .unwrap_or_else(|| "{}".to_string());
+
+    // Build runtime_config with capabilities
+    let mut rt_config = serde_json::json!({});
+    if let Some(ref caps) = body.capabilities {
+        rt_config["capabilities"] = serde_json::Value::Array(
+            caps.iter().map(|c| serde_json::Value::String(c.clone())).collect()
+        );
+    }
+    let rt_config_str = rt_config.to_string();
+
+    // Re-registration: if agent_id provided and exists, reactivate
+    let agent = if let Some(ref existing_id) = body.agent_id {
+        let existing = query_as::<_, Agent>("SELECT * FROM agents WHERE id = ? AND company_id = ?")
+            .bind(existing_id)
+            .bind(&cid)
+            .fetch_optional(&state.pool)
+            .await?;
+
+        if let Some(mut a) = existing {
+            // Reactivate: update status, capabilities, heartbeat
+            sqlx::query(
+                "UPDATE agents SET name = ?, role = ?, status = 'idle', adapter_type = ?,\
+                 adapter_config = ?, runtime_config = ?, last_heartbeat = strftime('%Y-%m-%dT%H:%M:%SZ', 'now'),\
+                 error_message = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?"
+            )
+                .bind(&body.name)
+                .bind(&role)
+                .bind(&adapter_type)
+                .bind(&adapter_config)
+                .bind(&rt_config_str)
+                .bind(existing_id)
+                .execute(&state.pool)
+                .await?;
+
+            a = query_as::<_, Agent>("SELECT * FROM agents WHERE id = ?")
+                .bind(existing_id)
+                .fetch_one(&state.pool)
+                .await?;
+
+            // Log re-registration
+            let activity_id = Uuid::new_v4().to_string();
+            let _ = sqlx::query(
+                "INSERT INTO activity_log (id, company_id, actor_type, actor_id, action, entity_type, entity_id, details)\
+                 VALUES (?, ?, 'agent', ?, 'register', 'agent', ?, ?)"
+            )
+                .bind(&activity_id)
+                .bind(&cid)
+                .bind(&a.id)
+                .bind(&a.id)
+                .bind(serde_json::json!({"re_register": true, "capabilities": body.capabilities}).to_string())
+                .execute(&state.pool)
+                .await;
+
+            Some(a)
+        } else {
+            None
+        }
+    } else {
+        None
+    };
+
+    // Create new agent if not re-registered
+    let agent = match agent {
+        Some(a) => a,
+        None => {
+            let id = Uuid::new_v4().to_string();
+            sqlx::query(
+                "INSERT INTO agents (id, company_id, name, role, status, adapter_type, adapter_config, runtime_config, permissions, last_heartbeat)\
+                 VALUES (?, ?, ?, ?, 'idle', ?, ?, ?, '{}', strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))"
+            )
+                .bind(&id)
+                .bind(&cid)
+                .bind(&body.name)
+                .bind(&role)
+                .bind(&adapter_type)
+                .bind(&adapter_config)
+                .bind(&rt_config_str)
+                .execute(&state.pool)
+                .await?;
+
+            // Log registration
+            let activity_id = Uuid::new_v4().to_string();
+            let _ = sqlx::query(
+                "INSERT INTO activity_log (id, company_id, actor_type, actor_id, action, entity_type, entity_id, details)\
+                 VALUES (?, ?, 'agent', ?, 'register', 'agent', ?, ?)"
+            )
+                .bind(&activity_id)
+                .bind(&cid)
+                .bind(&id)
+                .bind(&id)
+                .bind(serde_json::json!({"capabilities": body.capabilities}).to_string())
+                .execute(&state.pool)
+                .await;
+
+            query_as::<_, Agent>("SELECT * FROM agents WHERE id = ?")
+                .bind(&id)
+                .fetch_one(&state.pool)
+                .await?
+        }
+    };
+
+    // Auto-assign backlogged todo issues matching this agent's role
+    let assigned = assign_backlog(&state, &agent).await?;
+
+    tracing::info!(
+        "Agent {} ({}) registered with {} capabilities, {} issues auto-assigned",
+        agent.name,
+        agent.id,
+        body.capabilities.map(|c| c.len()).unwrap_or(0),
+        assigned.len(),
+    );
+
+    Ok(Json(serde_json::json!({
+        "agent": {
+            "id": agent.id,
+            "name": agent.name,
+            "role": agent.role,
+            "status": agent.status,
+        },
+        "assignedIssues": assigned.iter().map(|i| serde_json::json!({
+            "id": i.id,
+            "identifier": i.identifier,
+            "title": i.title,
+        })).collect::<Vec<_>>(),
+    })))
+}
+
+/// Assign backlogged todo issues to a newly registered agent.
+/// Matches unassigned todo issues in the same company, ordered by priority.
+async fn assign_backlog(
+    state: &SharedState,
+    agent: &Agent,
+) -> Result<Vec<crate::db::models::Issue>, sqlx::Error> {
+    // Find unassigned todo issues (max 5 to avoid overloading)
+    let issues = sqlx::query_as::<_, crate::db::models::Issue>(
+        "SELECT * FROM issues WHERE company_id = ? AND assignee_agent_id IS NULL AND status = 'todo'\
+         ORDER BY CASE priority WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END,\
+         created_at LIMIT 5"
+    )
+        .bind(&agent.company_id)
+        .fetch_all(&state.pool)
+        .await?;
+
+    let mut assigned = Vec::new();
+    for issue in &issues {
+        let result = sqlx::query(
+            "UPDATE issues SET assignee_agent_id = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')\
+             WHERE id = ? AND assignee_agent_id IS NULL"
+        )
+            .bind(&agent.id)
+            .bind(&issue.id)
+            .execute(&state.pool)
+            .await;
+
+        if let Ok(r) = result {
+            if r.rows_affected() > 0 {
+                // Log the auto-assignment
+                let activity_id = Uuid::new_v4().to_string();
+                let _ = sqlx::query(
+                    "INSERT INTO activity_log (id, company_id, actor_type, actor_id, action, entity_type, entity_id, details)\
+                     VALUES (?, ?, 'system', ?, 'auto_assign', 'issue', ?, ?)"
+                )
+                    .bind(&activity_id)
+                    .bind(&agent.company_id)
+                    .bind(&agent.id)
+                    .bind(&issue.id)
+                    .bind(serde_json::json!({"reason": "registration_backlog", "agent": agent.name}).to_string())
+                    .execute(&state.pool)
+                    .await;
+
+                assigned.push(issue.clone());
+            }
+        }
+    }
+
+    Ok(assigned)
 }
 
 pub async fn update(
@@ -248,8 +442,14 @@ pub async fn invoke(
     })))
 }
 
-/// Heartbeat: update agent's last_heartbeat timestamp.
-/// Agents call this periodically to signal they're alive.
+/// Heartbeat: update agent's last_heartbeat timestamp with optional status payload.
+/// Agents call this periodically to signal they're alive and report progress.
+///
+/// Payload fields:
+///   - `status`: agent status ("running", "idle", "error")
+///   - `current_issue_id`: issue the agent is currently working on
+///   - `progress_notes`: free-text progress update
+///   - `capabilities`: JSON array of capability strings (stored in runtime_config)
 pub async fn heartbeat(
     State(state): State<SharedState>,
     Path(aid): Path<String>,
@@ -261,10 +461,14 @@ pub async fn heartbeat(
         .await?
         .ok_or_else(|| AppError::NotFound(format!("Agent {} not found", aid)))?;
 
-    // Optionally accept a status payload
     let status = body.get("status").and_then(|v| v.as_str()).map(String::from);
+    let current_issue_id = body.get("current_issue_id").and_then(|v| v.as_str()).map(String::from);
+    let progress_notes = body.get("progress_notes").and_then(|v| v.as_str()).map(String::from);
+    let capabilities = body.get("capabilities").and_then(|v| v.as_array()).cloned();
 
     let now = chrono::Utc::now().to_rfc3339();
+
+    // Update agent status and heartbeat
     if let Some(ref s) = status {
         sqlx::query(
             "UPDATE agents SET last_heartbeat = ?, status = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?"
@@ -282,6 +486,45 @@ pub async fn heartbeat(
             .bind(&aid)
             .execute(&state.pool)
             .await?;
+    }
+
+    // Update runtime_config with capabilities if provided
+    if let Some(ref caps) = capabilities {
+        let mut rt_config: serde_json::Value =
+            serde_json::from_str(&agent.runtime_config).unwrap_or(serde_json::json!({}));
+        rt_config["capabilities"] = serde_json::Value::Array(caps.clone());
+        let config_str = rt_config.to_string();
+        sqlx::query(
+            "UPDATE agents SET runtime_config = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?"
+        )
+            .bind(&config_str)
+            .bind(&aid)
+            .execute(&state.pool)
+            .await?;
+    }
+
+    // Log to activity if progress notes or issue change provided
+    if progress_notes.is_some() || current_issue_id.is_some() {
+        let mut details = serde_json::Map::new();
+        if let Some(ref notes) = progress_notes {
+            details.insert("progress_notes".into(), serde_json::Value::String(notes.clone()));
+        }
+        if let Some(ref iid) = current_issue_id {
+            details.insert("current_issue_id".into(), serde_json::Value::String(iid.clone()));
+        }
+
+        let activity_id = Uuid::new_v4().to_string();
+        let _ = sqlx::query(
+            "INSERT INTO activity_log (id, company_id, actor_type, actor_id, action, entity_type, entity_id, details)\
+             VALUES (?, ?, 'agent', ?, 'heartbeat', 'agent', ?, ?)"
+        )
+            .bind(&activity_id)
+            .bind(&agent.company_id)
+            .bind(&aid)
+            .bind(&aid)
+            .bind(serde_json::Value::Object(details).to_string())
+            .execute(&state.pool)
+            .await;
     }
 
     Ok(Json(serde_json::json!({

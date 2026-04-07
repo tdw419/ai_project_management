@@ -28,41 +28,43 @@ Migration script (`migrate_from_paperclip.py`).
 
 ## Next Phases
 
-### P5 -- Production Readiness
+### P5 -- Production Readiness (DONE)
 
 Goal: run GeoForge as a systemd service, replace Paperclip for real.
 
-- [ ] **P5-A: systemd unit file** -- `geo-forge.service` with auto-restart,
+- [x] **P5-A: systemd unit file** -- `geo-forge.service` with auto-restart,
       journal logging, env file for config
-- [ ] **P5-B: config file** -- `geo-forge.toml` or env-based config for
+- [x] **P5-B: config file** -- `geo-forge.toml` or env-based config for
       DB path, port, health thresholds, scheduler interval, rate limits.
       Stop using raw env vars scattered everywhere.
-- [ ] **P5-C: DB backups** -- SQLite WAL checkpoint + periodic copy.
+- [x] **P5-C: DB backups** -- SQLite WAL checkpoint + periodic copy.
       One cron job, one line.
-- [ ] **P5-D: logging** -- structured JSON logs (tracing-subscriber with
+- [x] **P5-D: logging** -- structured JSON logs (tracing-subscriber with
       json formatter). Pipe to journalctl, done.
-- [ ] **P5-E: graceful migration** -- dry-run migration against live
+- [x] **P5-E: graceful migration** -- dry-run migration against live
       Paperclip data, verify counts, then cutover. Keep Paperclip on
       port 3100 as read-only fallback for 48h.
 
-### P6 -- Agent Orchestration (Real)
+### P6 -- Agent Orchestration (DONE)
 
 Goal: agents actually run through GeoForge, not just tracked.
 
-- [ ] **P6-A: heartbeat executor** -- agents POST heartbeat with status
-      payload (current issue, progress notes). GeoForge updates
-      health_status + last_heartbeat. Wire the existing `health_monitor`
-      background task.
-- [ ] **P6-B: routine execution** -- when scheduler fires a routine,
-      record the run in `routine_runs`, invoke the agent, capture
-      stdout/stderr + exit code, log to activity. Currently executor
-      exists but isn't wired end-to-end.
-- [ ] **P6-C: agent lifecycle** -- agent registration with capabilities
-      manifest. Startup handshake: agent announces itself, GeoForge
-      assigns backlogged work or marks idle.
-- [ ] **P6-D: retry & backoff** -- failed invocations retry with
-      exponential backoff. Configurable max retries per routine.
-      Dead agents get auto-paused after N failures.
+- [x] **P6-A: heartbeat executor** -- heartbeat endpoint accepts payload
+      with `current_issue_id`, `progress_notes`, `capabilities`. Logs to
+      activity. Health monitor runs as background task.
+- [x] **P6-B: routine execution** -- scheduler fires routines end-to-end:
+      cron evaluation -> issue finding -> agent invocation -> stdout/stderr
+      capture -> routine_runs recording + invocations recording. New
+      `GET /api/routines/{rid}/runs` endpoint for run history.
+- [x] **P6-C: agent lifecycle** -- registration handshake endpoint
+      `POST /api/companies/{cid}/agents/register` with capabilities manifest.
+      Auto-assigns up to 5 backlogged todo issues. Re-registration reactivates
+      paused/error agents.
+- [x] **P6-D: retry & backoff** -- `max_retries` (default 3) and
+      `retry_interval_secs` (default 300) on routines. Exponential backoff
+      on failure. Auto-pauses agent + deactivates routine after max retries.
+
+**Current: 28 src files, ~3700 LOC, 47 tests, 13 tables, 39+ endpoints.**
 
 ### P7 -- Operational Intelligence
 

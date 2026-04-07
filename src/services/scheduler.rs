@@ -54,6 +54,20 @@ async fn process_routine(
     routine: &crate::db::models::Routine,
     now: &chrono::DateTime<chrono::Utc>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    // Check if we're in a retry backoff window
+    if let Some(ref retry_at) = routine.next_retry_at {
+        if let Some(retry_time) = parse_timestamp(retry_at) {
+            if *now < retry_time {
+                tracing::debug!(
+                    "Routine {} in retry backoff until {}",
+                    routine.id,
+                    retry_at,
+                );
+                return Ok(());
+            }
+        }
+    }
+
     let cron_expr = match &routine.cron_expression {
         Some(expr) => expr.clone(),
         None => return Ok(()), // No cron = manual trigger only
@@ -74,7 +88,13 @@ async fn process_routine(
         .and_then(|s| parse_timestamp(s));
 
     // Find the most recent fire time before now
-    let should_trigger = should_fire(&schedule, last_triggered.as_ref(), now);
+    // For routines in retry mode (consecutive_failures > 0), also allow firing via retry schedule
+    let should_trigger = if routine.consecutive_failures > 0 {
+        // In retry mode: fire if retry time has passed (already checked above) or cron fires
+        should_fire(&schedule, last_triggered.as_ref(), now)
+    } else {
+        should_fire(&schedule, last_triggered.as_ref(), now)
+    };
 
     if !should_trigger {
         return Ok(());
@@ -129,6 +149,9 @@ async fn process_routine(
     let agent_id = routine.assignee_agent_id.clone();
     let routine_title = routine.title.clone();
     let routine_id = routine.id.clone();
+    let max_retries = routine.max_retries;
+    let retry_interval_secs = routine.retry_interval_secs;
+    let consecutive_failures = routine.consecutive_failures;
     tokio::spawn(async move {
         let result = executor::invoke_agent(
             &state_clone,
@@ -140,17 +163,105 @@ async fn process_routine(
             .await;
 
         if result.success {
+            // Reset consecutive failures on success
+            let _ = sqlx::query(
+                "UPDATE routines SET consecutive_failures = 0, next_retry_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?"
+            )
+                .bind(&routine_id)
+                .execute(&state_clone.pool)
+                .await;
+
             tracing::info!(
                 "Routine '{}' completed successfully in {}ms",
                 routine_title,
                 result.duration_ms,
             );
         } else {
+            // Increment consecutive failures
+            let new_failures = consecutive_failures + 1;
+            let _ = sqlx::query(
+                "UPDATE routines SET consecutive_failures = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?"
+            )
+                .bind(new_failures)
+                .bind(&routine_id)
+                .execute(&state_clone.pool)
+                .await;
+
             tracing::warn!(
-                "Routine '{}' failed: {}",
+                "Routine '{}' failed ({}/{}): {}",
                 routine_title,
+                new_failures,
+                max_retries,
                 result.output.chars().take(200).collect::<String>(),
             );
+
+            // Check if we've exceeded max retries -> auto-pause agent
+            if new_failures >= max_retries {
+                tracing::error!(
+                    "Routine '{}' exceeded max retries ({}), auto-pausing agent {}",
+                    routine_title,
+                    max_retries,
+                    agent_id,
+                );
+
+                let _ = sqlx::query(
+                    "UPDATE agents SET status = 'paused', error_message = ?, paused_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?"
+                )
+                    .bind(format!("Auto-paused: routine '{}' failed {} consecutive times", routine_title, new_failures))
+                    .bind(&agent_id)
+                    .execute(&state_clone.pool)
+                    .await;
+
+                // Log the auto-pause
+                let activity_id = uuid::Uuid::new_v4().to_string();
+                let company_id = sqlx::query_scalar::<_, String>(
+                    "SELECT company_id FROM agents WHERE id = ?"
+                )
+                    .bind(&agent_id)
+                    .fetch_one(&state_clone.pool)
+                    .await
+                    .unwrap_or_default();
+
+                let _ = sqlx::query(
+                    "INSERT INTO activity_log (id, company_id, actor_type, actor_id, action, entity_type, entity_id, details)\
+                     VALUES (?, ?, 'system', 'scheduler', 'auto_pause', 'agent', ?, ?)"
+                )
+                    .bind(&activity_id)
+                    .bind(&company_id)
+                    .bind(&agent_id)
+                    .bind(format!("{{\"reason\": \"max_retries_exceeded\", \"routine\": \"{}\", \"failures\": {}}}", routine_title, new_failures))
+                    .execute(&state_clone.pool)
+                    .await;
+
+                // Deactivate the routine too
+                let _ = sqlx::query(
+                    "UPDATE routines SET status = 'inactive', updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?"
+                )
+                    .bind(&routine_id)
+                    .execute(&state_clone.pool)
+                    .await;
+            } else {
+                // Schedule retry with exponential backoff
+                let backoff_secs = retry_interval_secs * 2i64.pow(new_failures as u32 - 1);
+                let retry_at = chrono::Utc::now() + chrono::Duration::seconds(backoff_secs);
+                let retry_str = retry_at.to_rfc3339();
+                let _ = sqlx::query(
+                    "UPDATE routines SET next_retry_at = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?"
+                )
+                    .bind(&retry_str)
+                    .bind(&routine_id)
+                    .execute(&state_clone.pool)
+                    .await;
+
+                tracing::info!(
+                    "Routine '{}' retry #{}/{} scheduled in {}s (at {})",
+                    routine_title,
+                    new_failures,
+                    max_retries,
+                    backoff_secs,
+                    retry_str,
+                );
+            }
         }
     });
 

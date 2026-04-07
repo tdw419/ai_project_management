@@ -1,8 +1,9 @@
-use axum::{extract::{Path, State}, response::Json};
+use axum::{extract::{Path, Query, State}, response::Json};
+use serde::Deserialize;
 use sqlx::query_as;
 use uuid::Uuid;
 use crate::{AppResult, SharedState};
-use crate::db::models::{Routine, CreateRoutineRequest};
+use crate::db::models::{Routine, RoutineRun, CreateRoutineRequest};
 
 pub async fn list(
     State(state): State<SharedState>,
@@ -24,10 +25,12 @@ pub async fn create(
 ) -> AppResult<Json<Routine>> {
     let id = Uuid::new_v4().to_string();
     let concurrency = body.concurrency.unwrap_or_else(|| "skip_if_active".to_string());
+    let max_retries = body.max_retries.unwrap_or(3);
+    let retry_interval_secs = body.retry_interval_secs.unwrap_or(300);
 
     sqlx::query(
-        "INSERT INTO routines (id, company_id, project_id, title, description, assignee_agent_id, cron_expression, concurrency)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+        "INSERT INTO routines (id, company_id, project_id, title, description, assignee_agent_id, cron_expression, concurrency, max_retries, retry_interval_secs)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     )
         .bind(&id)
         .bind(&cid)
@@ -37,6 +40,8 @@ pub async fn create(
         .bind(&body.assignee_agent_id)
         .bind(&body.cron_expression)
         .bind(&concurrency)
+        .bind(max_retries)
+        .bind(retry_interval_secs)
         .execute(&state.pool)
         .await?;
 
@@ -179,4 +184,47 @@ pub async fn delete(
         "routineId": rid,
         "title": routine.title,
     })))
+}
+
+#[derive(Debug, Deserialize)]
+pub struct RunListParams {
+    pub status: Option<String>,
+    pub limit: Option<i64>,
+    pub offset: Option<i64>,
+}
+
+/// List execution runs for a routine.
+pub async fn list_runs(
+    State(state): State<SharedState>,
+    Path(rid): Path<String>,
+    Query(params): Query<RunListParams>,
+) -> AppResult<Json<Vec<RoutineRun>>> {
+    let limit = params.limit.unwrap_or(50).min(500);
+    let offset = params.offset.unwrap_or(0);
+
+    let runs = match params.status {
+        Some(ref s) => {
+            query_as::<_, RoutineRun>(
+                "SELECT * FROM routine_runs WHERE routine_id = ? AND status = ? ORDER BY started_at DESC LIMIT ? OFFSET ?"
+            )
+                .bind(&rid)
+                .bind(s)
+                .bind(limit)
+                .bind(offset)
+                .fetch_all(&state.pool)
+                .await?
+        }
+        None => {
+            query_as::<_, RoutineRun>(
+                "SELECT * FROM routine_runs WHERE routine_id = ? ORDER BY started_at DESC LIMIT ? OFFSET ?"
+            )
+                .bind(&rid)
+                .bind(limit)
+                .bind(offset)
+                .fetch_all(&state.pool)
+                .await?
+        }
+    };
+
+    Ok(Json(runs))
 }

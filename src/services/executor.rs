@@ -83,6 +83,26 @@ pub async fn invoke_agent(
         .execute(&state.pool)
         .await;
 
+    // Create routine_runs record if this is a routine invocation
+    let routine_run_id = if let Some(rid) = routine_id {
+        let run_id = Uuid::new_v4().to_string();
+        let _ = sqlx::query(
+            "INSERT INTO routine_runs (id, routine_id, agent_id, company_id, issue_id, triggered_by, status, started_at)
+             VALUES (?, ?, ?, ?, ?, ?, 'running', strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))"
+        )
+            .bind(&run_id)
+            .bind(rid)
+            .bind(agent_id)
+            .bind(&company_id)
+            .bind(issue_id)
+            .bind(triggered_by)
+            .execute(&state.pool)
+            .await;
+        Some(run_id)
+    } else {
+        None
+    };
+
     // Parse adapter config
     let config: serde_json::Value =
         serde_json::from_str(&agent.adapter_config).unwrap_or_default();
@@ -220,6 +240,21 @@ pub async fn invoke_agent(
                 .execute(&state.pool)
                 .await;
 
+            // Update routine_runs record
+            if let Some(ref run_id) = routine_run_id {
+                let run_status = if success { "completed" } else { "failed" };
+                let output_snippet = &combined[..combined.len().min(1000)];
+                let _ = sqlx::query(
+                    "UPDATE routine_runs SET status = ?, output = ?, completed_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), duration_ms = ? WHERE id = ?"
+                )
+                    .bind(run_status)
+                    .bind(output_snippet)
+                    .bind(duration_ms as i64)
+                    .bind(run_id)
+                    .execute(&state.pool)
+                    .await;
+            }
+
             tracing::info!(
                 "Agent {} ({}) completed in {}ms, success={}",
                 agent.name,
@@ -255,6 +290,18 @@ pub async fn invoke_agent(
                 .execute(&state.pool)
                 .await;
 
+            // Update routine_runs record
+            if let Some(ref run_id) = routine_run_id {
+                let _ = sqlx::query(
+                    "UPDATE routine_runs SET status = 'failed', output = ?, completed_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), duration_ms = ? WHERE id = ?"
+                )
+                    .bind(e.to_string())
+                    .bind(duration_ms as i64)
+                    .bind(run_id)
+                    .execute(&state.pool)
+                    .await;
+            }
+
             InvokeResult {
                 success: false,
                 output: format!("Failed to execute: {}", e),
@@ -279,6 +326,17 @@ pub async fn invoke_agent(
                 .bind(&invocation_id)
                 .execute(&state.pool)
                 .await;
+
+            // Update routine_runs record
+            if let Some(ref run_id) = routine_run_id {
+                let _ = sqlx::query(
+                    "UPDATE routine_runs SET status = 'timeout', output = 'Execution timed out', completed_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), duration_ms = ? WHERE id = ?"
+                )
+                    .bind(duration_ms as i64)
+                    .bind(run_id)
+                    .execute(&state.pool)
+                    .await;
+            }
 
             InvokeResult {
                 success: false,

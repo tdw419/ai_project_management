@@ -114,6 +114,10 @@ pub struct Routine {
     pub status: String,
     pub concurrency: String,
     pub last_triggered_at: Option<String>,
+    pub max_retries: i64,
+    pub consecutive_failures: i64,
+    pub retry_interval_secs: i64,
+    pub next_retry_at: Option<String>,
     pub created_at: String,
     pub updated_at: String,
 }
@@ -147,6 +151,21 @@ pub struct Invocation {
     pub duration_ms: Option<i64>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct RoutineRun {
+    pub id: String,
+    pub routine_id: String,
+    pub agent_id: String,
+    pub company_id: String,
+    pub issue_id: Option<String>,
+    pub triggered_by: String,
+    pub status: String,
+    pub output: Option<String>,
+    pub started_at: String,
+    pub completed_at: Option<String>,
+    pub duration_ms: Option<i64>,
+}
+
 // -- Request/Response DTOs --
 
 #[derive(Debug, Deserialize)]
@@ -177,6 +196,22 @@ pub struct UpdateAgentRequest {
     pub adapter_config: Option<serde_json::Value>,
     pub runtime_config: Option<serde_json::Value>,
     pub permissions: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct RegisterAgentRequest {
+    /// Human-readable name for this agent
+    pub name: String,
+    /// Role: "engineer", "qa", "ceo", "general", etc.
+    pub role: Option<String>,
+    /// Adapter type (default: "hermes_local")
+    pub adapter_type: Option<String>,
+    /// Adapter configuration JSON
+    pub adapter_config: Option<serde_json::Value>,
+    /// Capabilities this agent supports (e.g. ["rust", "testing", "review"])
+    pub capabilities: Option<Vec<String>>,
+    /// Optional: agent ID to claim (for re-registration)
+    pub agent_id: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -222,6 +257,8 @@ pub struct CreateRoutineRequest {
     pub cron_expression: Option<String>,
     pub project_id: Option<String>,
     pub concurrency: Option<String>,
+    pub max_retries: Option<i64>,
+    pub retry_interval_secs: Option<i64>,
 }
 
 #[derive(Debug, Deserialize)]

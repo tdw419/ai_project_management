@@ -23,6 +23,7 @@ pub fn build_router(state: SharedState, rate_max: u32, rate_refill: u32, cors_or
         .route("/api/companies/{cid}/agents", get(crate::routes::agents::list))
         .route("/api/agents/{aid}", get(crate::routes::agents::get))
         .route("/api/companies/{cid}/agents", post(crate::routes::agents::create))
+        .route("/api/companies/{cid}/agents/register", post(crate::routes::agents::register))
         .route("/api/agents/{aid}", patch(crate::routes::agents::update))
         .route("/api/agents/{aid}", delete(crate::routes::agents::delete))
         .route("/api/agents/{aid}/wakeup", post(crate::routes::agents::wakeup))
@@ -56,6 +57,7 @@ pub fn build_router(state: SharedState, rate_max: u32, rate_refill: u32, cors_or
         .route("/api/routines/{rid}", patch(crate::routes::routines::update))
         .route("/api/routines/{rid}", delete(crate::routes::routines::delete))
         .route("/api/routines/{rid}/trigger", post(crate::routes::routines::trigger))
+        .route("/api/routines/{rid}/runs", get(crate::routes::routines::list_runs))
         // Dispatch
         .route("/api/companies/{cid}/dispatch", post(crate::routes::dispatch::dispatch))
         // Activity log
