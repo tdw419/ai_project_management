@@ -94,7 +94,9 @@ pub async fn trigger(
     // Find issue for the routine
     let issue = if let Some(ref project_id) = routine.project_id {
         sqlx::query_as::<_, crate::db::models::Issue>(
-            "SELECT * FROM issues WHERE company_id = ? AND project_id = ? AND status = 'todo' ORDER BY created_at LIMIT 1"
+            "SELECT * FROM issues WHERE company_id = ? AND project_id = ? AND status = 'todo' \
+             ORDER BY CASE priority WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END, \
+             created_at LIMIT 1"
         )
             .bind(&routine.company_id)
             .bind(project_id)
@@ -102,7 +104,9 @@ pub async fn trigger(
             .await?
     } else {
         sqlx::query_as::<_, crate::db::models::Issue>(
-            "SELECT * FROM issues WHERE company_id = ? AND (assignee_agent_id = ? OR assignee_agent_id IS NULL) AND status = 'todo' ORDER BY created_at LIMIT 1"
+            "SELECT * FROM issues WHERE company_id = ? AND (assignee_agent_id = ? OR assignee_agent_id IS NULL) AND status = 'todo' \
+             ORDER BY CASE priority WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END, \
+             created_at LIMIT 1"
         )
             .bind(&routine.company_id)
             .bind(&routine.assignee_agent_id)
@@ -145,5 +149,34 @@ pub async fn trigger(
         "routineId": rid,
         "agentId": routine.assignee_agent_id,
         "issueId": issue_id,
+    })))
+}
+
+/// Deactivate a routine by setting status to 'inactive'.
+pub async fn delete(
+    State(state): State<SharedState>,
+    Path(rid): Path<String>,
+) -> AppResult<Json<serde_json::Value>> {
+    let routine = query_as::<_, Routine>("SELECT * FROM routines WHERE id = ?")
+        .bind(&rid)
+        .fetch_optional(&state.pool)
+        .await?
+        .ok_or_else(|| crate::error::AppError::NotFound(format!("Routine {} not found", rid)))?;
+
+    if routine.status == "inactive" {
+        return Err(crate::error::AppError::Validation(format!("Routine {} already inactive", rid)));
+    }
+
+    sqlx::query(
+        "UPDATE routines SET status = 'inactive', updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?"
+    )
+        .bind(&rid)
+        .execute(&state.pool)
+        .await?;
+
+    Ok(Json(serde_json::json!({
+        "status": "inactive",
+        "routineId": rid,
+        "title": routine.title,
     })))
 }

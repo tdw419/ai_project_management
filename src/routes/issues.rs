@@ -89,6 +89,12 @@ pub async fn create(
     let identifier = format!("{}-{}", company.issue_prefix, issue_number);
     let priority = body.priority.unwrap_or_else(|| "medium".to_string());
     let origin_kind = body.origin_kind.unwrap_or_else(|| "manual".to_string());
+
+    // Validate blocked_by identifiers exist in this company
+    if let Some(ref deps) = body.blocked_by {
+        validate_blocked_by(&state, &cid, deps).await?;
+    }
+
     let blocked_by = body.blocked_by
         .map(|v| serde_json::to_string(&v).unwrap_or_else(|_| "[]".to_string()))
         .unwrap_or_else(|| "[]".to_string());
@@ -152,6 +158,12 @@ pub async fn update(
     let priority = body.priority.unwrap_or_else(|| issue.priority.clone());
     let assignee_agent_id = body.assignee_agent_id.or(issue.assignee_agent_id);
     let project_id = body.project_id.or(issue.project_id);
+
+    // Validate blocked_by identifiers exist in this company (if changed)
+    if let Some(ref deps) = body.blocked_by {
+        validate_blocked_by(&state, &issue.company_id, deps).await?;
+    }
+
     let blocked_by = body.blocked_by
         .map(|v| serde_json::to_string(&v).unwrap_or_else(|_| "[]".to_string()))
         .or(issue.blocked_by);
@@ -202,6 +214,44 @@ pub async fn update(
     ).await;
 
     Ok(Json(updated))
+}
+
+/// Soft-delete an issue by setting status to 'cancelled'.
+pub async fn delete(
+    State(state): State<SharedState>,
+    Path(iid): Path<String>,
+) -> AppResult<Json<serde_json::Value>> {
+    let issue = resolve_issue(&state, &iid).await?;
+
+    if issue.status == "cancelled" {
+        return Err(crate::error::AppError::Validation(format!(
+            "Issue {} already cancelled",
+            issue.identifier.as_deref().unwrap_or(&issue.id)
+        )));
+    }
+    if issue.status == "done" {
+        return Err(crate::error::AppError::Validation(format!(
+            "Cannot delete completed issue {}",
+            issue.identifier.as_deref().unwrap_or(&issue.id)
+        )));
+    }
+
+    let now = chrono::Utc::now().to_rfc3339();
+    sqlx::query(
+        "UPDATE issues SET status = 'cancelled', completed_at = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?"
+    )
+        .bind(&now)
+        .bind(&issue.id)
+        .execute(&state.pool)
+        .await?;
+
+    log_activity(&state, &issue.company_id, "system", "geo-forge", "issue.deleted", "issue", &issue.id, None).await;
+
+    Ok(Json(serde_json::json!({
+        "status": "cancelled",
+        "issueId": issue.id,
+        "identifier": issue.identifier,
+    })))
 }
 
 pub async fn checkout(
@@ -422,6 +472,35 @@ async fn are_all_deps_resolved(state: &SharedState, company_id: &str, deps: &[St
         }
     }
     true
+}
+
+/// Validate that all identifiers in blocked_by exist as issues in the same company.
+async fn validate_blocked_by(
+    state: &SharedState,
+    company_id: &str,
+    deps: &[String],
+) -> Result<(), crate::error::AppError> {
+    if deps.is_empty() {
+        return Ok(());
+    }
+    for dep in deps {
+        let exists = query_as::<_, Issue>(
+            "SELECT * FROM issues WHERE company_id = ? AND identifier = ?"
+        )
+            .bind(company_id)
+            .bind(dep)
+            .fetch_optional(&state.pool)
+            .await
+            .map_err(|e| crate::error::AppError::Internal(e.to_string()))?;
+
+        if exists.is_none() {
+            return Err(crate::error::AppError::Validation(format!(
+                "Unknown dependency '{}' -- no issue with that identifier exists in this company",
+                dep
+            )));
+        }
+    }
+    Ok(())
 }
 
 async fn log_activity(

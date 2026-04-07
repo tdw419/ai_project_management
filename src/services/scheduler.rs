@@ -199,7 +199,9 @@ async fn find_issue_for_routine(
 ) -> Result<Option<String>, sqlx::Error> {
     let issue = if let Some(ref project_id) = routine.project_id {
         sqlx::query_as::<_, crate::db::models::Issue>(
-            "SELECT * FROM issues WHERE company_id = ? AND project_id = ? AND status = 'todo' ORDER BY created_at LIMIT 1"
+            "SELECT * FROM issues WHERE company_id = ? AND project_id = ? AND status = 'todo' \
+             ORDER BY CASE priority WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END, \
+             created_at LIMIT 1"
         )
             .bind(&routine.company_id)
             .bind(project_id)
@@ -207,7 +209,9 @@ async fn find_issue_for_routine(
             .await?
     } else {
         sqlx::query_as::<_, crate::db::models::Issue>(
-            "SELECT * FROM issues WHERE company_id = ? AND (assignee_agent_id = ? OR assignee_agent_id IS NULL) AND status = 'todo' ORDER BY created_at LIMIT 1"
+            "SELECT * FROM issues WHERE company_id = ? AND (assignee_agent_id = ? OR assignee_agent_id IS NULL) AND status = 'todo' \
+             ORDER BY CASE priority WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END, \
+             created_at LIMIT 1"
         )
             .bind(&routine.company_id)
             .bind(&routine.assignee_agent_id)

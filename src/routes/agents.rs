@@ -167,7 +167,9 @@ pub async fn wakeup(
 
     // Invoke via executor (find next todo issue for this agent)
     let issue = sqlx::query_as::<_, crate::db::models::Issue>(
-        "SELECT * FROM issues WHERE assignee_agent_id = ? AND status = 'todo' ORDER BY created_at LIMIT 1"
+        "SELECT * FROM issues WHERE assignee_agent_id = ? AND status = 'todo' \
+         ORDER BY CASE priority WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END, \
+         created_at LIMIT 1"
     )
         .bind(&aid)
         .fetch_optional(&state.pool)
@@ -287,5 +289,45 @@ pub async fn heartbeat(
         "agentId": aid,
         "agentName": agent.name,
         "heartbeatAt": now,
+    })))
+}
+
+/// Soft-delete an agent by setting status to 'deleted'.
+/// Orphaned issues remain but lose their assignee.
+pub async fn delete(
+    State(state): State<SharedState>,
+    Path(aid): Path<String>,
+) -> AppResult<Json<serde_json::Value>> {
+    let agent = query_as::<_, Agent>("SELECT * FROM agents WHERE id = ?")
+        .bind(&aid)
+        .fetch_optional(&state.pool)
+        .await?
+        .ok_or_else(|| AppError::NotFound(format!("Agent {} not found", aid)))?;
+
+    if agent.status == "deleted" {
+        return Err(AppError::Validation(format!("Agent {} already deleted", aid)));
+    }
+
+    // Soft-delete the agent
+    sqlx::query(
+        "UPDATE agents SET status = 'deleted', updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?"
+    )
+        .bind(&aid)
+        .execute(&state.pool)
+        .await?;
+
+    // Unassign any issues currently assigned to this agent
+    sqlx::query(
+        "UPDATE issues SET assignee_agent_id = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') \
+         WHERE assignee_agent_id = ? AND status NOT IN ('done', 'cancelled')"
+    )
+        .bind(&aid)
+        .execute(&state.pool)
+        .await?;
+
+    Ok(Json(serde_json::json!({
+        "status": "deleted",
+        "agentId": aid,
+        "agentName": agent.name,
     })))
 }

@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use axum::Router;
-use axum::routing::{get, post, patch};
+use axum::routing::{delete, get, patch, post};
 use sqlx::SqlitePool;
 use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
@@ -54,11 +54,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .execute(&pool)
         .await?;
 
-    // Run migrations
-    let schema = include_str!("../migrations/001_init.sql");
-    sqlx::raw_sql(schema).execute(&pool).await?;
-    let invocations_schema = include_str!("../migrations/002_invocations.sql");
-    sqlx::raw_sql(invocations_schema).execute(&pool).await?;
+    // Run migrations via sqlx::migrate! (tracks applied migrations in _sqlx_migrations table)
+    sqlx::migrate!("./migrations")
+        .run(&pool)
+        .await?;
 
     let state = Arc::new(AppState::new(pool));
 
@@ -85,6 +84,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/api/agents/{aid}", get(routes::agents::get))
         .route("/api/companies/{cid}/agents", post(routes::agents::create))
         .route("/api/agents/{aid}", patch(routes::agents::update))
+        .route("/api/agents/{aid}", delete(routes::agents::delete))
         .route("/api/agents/{aid}/wakeup", post(routes::agents::wakeup))
         .route("/api/agents/{aid}/invoke", post(routes::agents::invoke))
         .route("/api/agents/{aid}/heartbeat", post(routes::agents::heartbeat))
@@ -93,6 +93,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/api/issues/{iid}", get(routes::issues::get))
         .route("/api/companies/{cid}/issues", post(routes::issues::create))
         .route("/api/issues/{iid}", patch(routes::issues::update))
+        .route("/api/issues/{iid}", delete(routes::issues::delete))
         .route("/api/issues/{iid}/checkout", post(routes::issues::checkout))
         .route("/api/issues/{iid}/comments", get(routes::issues::list_comments))
         .route("/api/issues/{iid}/comments", post(routes::issues::create_comment))
@@ -113,6 +114,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/api/companies/{cid}/routines", get(routes::routines::list))
         .route("/api/companies/{cid}/routines", post(routes::routines::create))
         .route("/api/routines/{rid}", patch(routes::routines::update))
+        .route("/api/routines/{rid}", delete(routes::routines::delete))
         .route("/api/routines/{rid}/trigger", post(routes::routines::trigger))
         // Dispatch
         .route("/api/companies/{cid}/dispatch", post(routes::dispatch::dispatch))
