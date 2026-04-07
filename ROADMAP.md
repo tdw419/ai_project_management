@@ -116,6 +116,38 @@ Goal: multiple agents working in concert, not just dispatched independently.
 - [ ] **P9-D: capacity planning** -- agent workload limits. Don't assign
       15 issues to one agent. Queue management with per-agent limits.
 
+### P10 -- Workspace Integration
+
+Goal: agents read and write the real world through Google Workspace.
+
+The `gws` CLI (googleworkspace/cli) is a Rust binary that wraps all Google
+Workspace APIs with structured JSON output.  It ships 95 agent-ready skills
+in OpenClaw format.  This phase makes it a first-class forge capability.
+
+- [ ] **P10-A: install and authenticate** -- build `gws` from
+      ~/zion/projects/ai_harness/ai_harness/cli-main, run `gws auth setup`
+      + `gws auth login`.  Verify with `gws drive files list --fields "files(id,name)"`.
+- [ ] **P10-B: skill ingestion** -- copy the 95 `gws-*` and `recipe-*` skills
+      from cli-main/skills/ into the forge agent's skill directory.  Agents
+      discover `gws` commands through their skill set, no forge code changes.
+- [ ] **P10-C: email-to-issue bridge** -- a forge routine that polls Gmail
+      via `gws gmail users messages list`, parses new messages matching a
+      pattern (subject tag, label, or sender), and creates issues
+      automatically.  The inverse of "agent posts comment -> notification".
+- [ ] **P10-D: dashboard to Sheet** -- a forge routine that runs daily,
+      calls the dashboard API, and writes throughput / bottleneck /
+      utilization data into a Google Sheet.  Stakeholders see live project
+      health without touching the forge.
+- [ ] **P10-E: calendar-driven scheduling** -- agents check Google Calendar
+      for review windows, standups, or deadlines.  Issues get due-dates from
+      calendar events.  An agent that finishes early can propose a meeting
+      via `gws calendar events insert`.
+
+**Why this phase exists:**  The forge is a closed loop right now -- issues
+go in, agents work on them, comments come out.  Workspace integration opens
+the loop: email creates work, spreadsheets report status, calendar drives
+cadence.  It's the difference between a tool and a team member.
+
 ---
 
 ## Not Planned (Deliberately)

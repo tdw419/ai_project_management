@@ -58,9 +58,13 @@ pub async fn create(
     Path(cid): Path<String>,
     Json(body): Json<CreateAgentRequest>,
 ) -> AppResult<Json<Agent>> {
+    crate::validation::require_non_empty(&body.name, "name")?;
+    crate::validation::validate_length(&body.name, "name", crate::validation::MAX_NAME_LEN)?;
+    crate::validation::validate_opt_enum(&body.role, "role", crate::validation::VALID_AGENT_ROLES)?;
+
     let id = Uuid::new_v4().to_string();
     let role = body.role.unwrap_or_else(|| "general".to_string());
-    let adapter_type = body.adapter_type.unwrap_or_else(|| "hermes_local".to_string());
+    let adapter_type = body.adapter_type.unwrap_or_else(|| "geo_harness".to_string());
     let adapter_config = body.adapter_config
         .map(|v| v.to_string())
         .unwrap_or_else(|| "{}".to_string());
@@ -106,7 +110,7 @@ pub async fn register(
     Json(body): Json<RegisterAgentRequest>,
 ) -> AppResult<Json<serde_json::Value>> {
     let role = body.role.unwrap_or_else(|| "general".to_string());
-    let adapter_type = body.adapter_type.unwrap_or_else(|| "hermes_local".to_string());
+    let adapter_type = body.adapter_type.unwrap_or_else(|| "geo_harness".to_string());
     let adapter_config = body.adapter_config
         .map(|v| v.to_string())
         .unwrap_or_else(|| "{}".to_string());
@@ -293,6 +297,13 @@ pub async fn update(
     Path(aid): Path<String>,
     Json(body): Json<UpdateAgentRequest>,
 ) -> AppResult<Json<Agent>> {
+    crate::validation::validate_opt_enum(&body.status, "status", crate::validation::VALID_AGENT_STATUSES)?;
+    crate::validation::validate_opt_enum(&body.role, "role", crate::validation::VALID_AGENT_ROLES)?;
+    if let Some(ref name) = body.name {
+        crate::validation::require_non_empty(name, "name")?;
+        crate::validation::validate_length(name, "name", crate::validation::MAX_NAME_LEN)?;
+    }
+
     let existing = query_as::<_, Agent>("SELECT * FROM agents WHERE id = ?")
         .bind(&aid)
         .fetch_optional(&state.pool)

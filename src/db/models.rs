@@ -292,3 +292,66 @@ pub struct TaskSummary {
     pub done: i64,
     pub cancelled: i64,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct AlertRule {
+    pub id: String,
+    pub company_id: String,
+    pub name: String,
+    pub rule_type: String,
+    pub threshold_mins: i64,
+    pub enabled: bool,
+    pub webhook_url: Option<String>,
+    pub last_fired_at: Option<String>,
+    pub created_at: String,
+    pub updated_at: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct SpecDocument {
+    pub id: String,
+    pub company_id: String,
+    pub title: String,
+    pub raw_content: String,
+    pub parsed_changes: String, // JSON array of ParsedChange
+    pub status: String,
+    pub change_count: i64,
+    pub imported_count: i64,
+    pub project_id: Option<String>,
+    pub created_at: String,
+    pub updated_at: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct SpecIssue {
+    pub id: String,
+    pub spec_id: String,
+    pub issue_id: String,
+    pub change_index: i64,
+    pub change_title: String,
+    pub created_at: String,
+}
+
+/// A parsed change section from an OpenSpec document.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ParsedChange {
+    pub title: String,
+    pub priority: String,
+    pub blocked_by: Vec<String>,
+    pub description: String,
+}
+
+// -- Spec Request DTOs --
+
+#[derive(Debug, Deserialize)]
+pub struct CreateSpecRequest {
+    pub title: String,
+    pub raw_content: String,
+    pub project_id: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ImportSpecRequest {
+    /// Which change indices to import (0-based). Empty = import all.
+    pub indices: Option<Vec<i64>>,
+}

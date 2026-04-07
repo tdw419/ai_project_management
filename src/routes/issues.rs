@@ -67,6 +67,11 @@ pub async fn create(
     Path(cid): Path<String>,
     Json(body): Json<CreateIssueRequest>,
 ) -> AppResult<Json<Issue>> {
+    crate::validation::require_non_empty(&body.title, "title")?;
+    crate::validation::validate_length(&body.title, "title", crate::validation::MAX_TITLE_LEN)?;
+    crate::validation::validate_opt_length(&body.description, "description", crate::validation::MAX_DESCRIPTION_LEN)?;
+    crate::validation::validate_opt_enum(&body.priority, "priority", crate::validation::VALID_PRIORITIES)?;
+
     let id = Uuid::new_v4().to_string();
 
     // Get company for issue prefix and counter
@@ -95,14 +100,20 @@ pub async fn create(
         validate_blocked_by(&state, &cid, deps).await?;
     }
 
+    // Check if issue has blockers before consuming body.blocked_by
+    let has_blockers = body.blocked_by.as_ref().map_or(false, |v| !v.is_empty());
+
     let blocked_by = body.blocked_by
         .map(|v| serde_json::to_string(&v).unwrap_or_else(|_| "[]".to_string()))
         .unwrap_or_else(|| "[]".to_string());
 
+    // Issues with blockers start in 'backlog'; unblocked issues start in 'todo'
+    let initial_status = if has_blockers { "backlog" } else { "todo" };
+
     sqlx::query(
         "INSERT INTO issues (id, company_id, project_id, parent_id, title, description, status, priority,
          assignee_agent_id, identifier, issue_number, origin_kind, origin_id, blocked_by)
-         VALUES (?, ?, ?, ?, ?, ?, 'todo', ?, ?, ?, ?, ?, ?, ?)"
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     )
         .bind(&id)
         .bind(&cid)
@@ -110,6 +121,7 @@ pub async fn create(
         .bind(&body.parent_id)
         .bind(&body.title)
         .bind(&body.description)
+        .bind(&initial_status)
         .bind(&priority)
         .bind(&body.assignee_agent_id)
         .bind(&identifier)
@@ -135,6 +147,14 @@ pub async fn update(
     Path(iid): Path<String>,
     Json(body): Json<UpdateIssueRequest>,
 ) -> AppResult<Json<Issue>> {
+    // Validate provided fields
+    if let Some(ref title) = body.title {
+        crate::validation::require_non_empty(title, "title")?;
+        crate::validation::validate_length(title, "title", crate::validation::MAX_TITLE_LEN)?;
+    }
+    crate::validation::validate_opt_length(&body.description, "description", crate::validation::MAX_DESCRIPTION_LEN)?;
+    crate::validation::validate_opt_enum(&body.priority, "priority", crate::validation::VALID_PRIORITIES)?;
+
     let issue = resolve_issue(&state, &iid).await?;
 
     // Validate status transition if status is changing
@@ -199,8 +219,8 @@ pub async fn update(
         .execute(&state.pool)
         .await?;
 
-    // If issue moved to done, check if any issues it was blocking are now unblocked
-    if status == "done" {
+    // If issue moved to done/cancelled, check if any issues it was blocking are now unblocked
+    if status == "done" || status == "cancelled" {
             check_unblock_dependents(&state, &issue.company_id, &issue.identifier).await;
     }
 
@@ -314,6 +334,9 @@ pub async fn create_comment(
     Path(iid): Path<String>,
     Json(body): Json<CreateCommentRequest>,
 ) -> AppResult<Json<IssueComment>> {
+    crate::validation::require_non_empty(&body.body, "body")?;
+    crate::validation::validate_length(&body.body, "body", crate::validation::MAX_COMMENT_LEN)?;
+
     let issue = resolve_issue(&state, &iid).await?;
     let id = Uuid::new_v4().to_string();
 
@@ -398,8 +421,7 @@ async fn resolve_issue(state: &SharedState, iid: &str) -> AppResult<Issue> {
 }
 
 async fn check_unblock_dependents(state: &SharedState, company_id: &str, identifier: &Option<String>) {
-    if identifier.is_none() { return; }
-    let ident = identifier.as_ref().unwrap();
+    let Some(ident) = identifier.as_deref() else { return; };
 
     // Find issues whose blocked_by contains this identifier
     let issues = query_as::<_, Issue>(
@@ -431,7 +453,16 @@ async fn check_unblock_dependents(state: &SharedState, company_id: &str, identif
                 .execute(&state.pool)
                 .await;
 
-            tracing::info!("Auto-promoted {} to todo (all blockers resolved)", issue.identifier.unwrap_or_default());
+            tracing::info!("Auto-promoted {} to todo (all blockers resolved)", issue.identifier.clone().unwrap_or_default());
+
+            log_activity(state, company_id, "system", "geo-forge", "issue.auto_promoted", "issue", &issue.id,
+                Some(serde_json::json!({
+                    "from": "backlog",
+                    "to": "todo",
+                    "reason": "all blockers resolved",
+                    "identifier": issue.identifier
+                }).to_string())
+            ).await;
         }
     }
 }

@@ -15,6 +15,8 @@ pub fn build_router(state: SharedState, rate_max: u32, rate_refill: u32, cors_or
         .route("/api/health", get(crate::routes::health::health))
         // Metrics
         .route("/api/metrics", get(crate::routes::metrics::metrics))
+        // Stats
+        .route("/api/stats", get(crate::routes::stats::stats))
         // Companies
         .route("/api/companies", get(crate::routes::companies::list).post(crate::routes::companies::create))
         .route("/api/companies/{cid}", get(crate::routes::companies::get))
@@ -62,6 +64,15 @@ pub fn build_router(state: SharedState, rate_max: u32, rate_refill: u32, cors_or
         .route("/api/companies/{cid}/dispatch", post(crate::routes::dispatch::dispatch))
         // Activity log
         .route("/api/companies/{cid}/activity", get(crate::routes::activity::list))
+        // Alert rules
+        .route("/api/companies/{cid}/alert-rules", get(crate::routes::alerts::list).post(crate::routes::alerts::create))
+        .route("/api/alert-rules/{rid}", delete(crate::routes::alerts::delete))
+        .route("/api/companies/{cid}/alerts/evaluate", post(crate::routes::alerts::evaluate))
+        // Spec documents
+        .route("/api/companies/{cid}/specs", get(crate::routes::specs::list).post(crate::routes::specs::create))
+        .route("/api/specs/{sid}", get(crate::routes::specs::get).delete(crate::routes::specs::delete))
+        .route("/api/specs/{sid}/import", post(crate::routes::specs::import))
+        .route("/api/specs/{sid}/issues", get(crate::routes::specs::spec_issues))
         // Middleware layers (order matters: outermost first)
         .layer(cors)
         .layer(TraceLayer::new_for_http())

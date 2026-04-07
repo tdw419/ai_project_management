@@ -10,16 +10,26 @@ pub struct InvokeResult {
     pub output: String,
     pub duration_ms: u64,
     pub invocation_id: Option<String>,
+    /// True if work was dispatched to a persistent worker (geo_harness)
+    /// rather than executed inline via child process.
+    pub dispatched: bool,
 }
 
-/// Invoke an agent via the hermes_local adapter and record the invocation.
+/// Invoke an agent via the appropriate adapter and record the invocation.
 ///
-/// This spawns a `hermes` CLI process with the agent's configuration.
+/// Two dispatch modes based on `adapter_type`:
+///
+/// **hermes_local** -- Spawns a child process (default: `hermes` CLI).
 /// The agent's adapter_config JSON can contain:
 ///   - `command`: override the command (default: "hermes")
 ///   - `args`: additional CLI arguments
 ///   - `env`: environment variables to set
 ///   - `working_dir`: working directory
+///
+/// **geo_harness** -- Assigns the issue and returns immediately.
+/// The agent is expected to be a persistent worker (geo-harness service)
+/// that polls for assigned issues and runs its own LLM loop. No child
+/// process is spawned. The invocation record is marked as "dispatched".
 pub async fn invoke_agent(
     state: &SharedState,
     agent_id: &str,
@@ -44,6 +54,7 @@ pub async fn invoke_agent(
                 output: format!("Agent {} not found", agent_id),
                 duration_ms: start.elapsed().as_millis() as u64,
                 invocation_id: None,
+                dispatched: false,
             };
         }
         Err(e) => {
@@ -52,6 +63,7 @@ pub async fn invoke_agent(
                 output: format!("DB error fetching agent: {}", e),
                 duration_ms: start.elapsed().as_millis() as u64,
                 invocation_id: None,
+                dispatched: false,
             };
         }
     };
@@ -65,8 +77,16 @@ pub async fn invoke_agent(
             output: format!("Agent {} is paused, skipping", agent.name),
             duration_ms: start.elapsed().as_millis() as u64,
             invocation_id: None,
+            dispatched: false,
         };
     }
+
+    // Determine adapter type (default: geo_harness for new-style workers)
+    let adapter_type = if agent.adapter_type.is_empty() {
+        "geo_harness"
+    } else {
+        &agent.adapter_type
+    };
 
     // Create invocation record
     let invocation_id = Uuid::new_v4().to_string();
@@ -82,6 +102,67 @@ pub async fn invoke_agent(
         .bind(triggered_by)
         .execute(&state.pool)
         .await;
+
+    // Mark agent as running
+    let _ = sqlx::query(
+        "UPDATE agents SET status = 'running', last_heartbeat = strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?"
+    )
+        .bind(agent_id)
+        .execute(&state.pool)
+        .await;
+
+    // Assign issue to agent if one was provided
+    if let Some(iid) = issue_id {
+        let _ = sqlx::query(
+            "UPDATE agents SET current_issue_id = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?"
+        )
+            .bind(iid)
+            .bind(agent_id)
+            .execute(&state.pool)
+            .await;
+    }
+
+    // ================================================================
+    // geo_harness dispatch: assign + return. Worker polls for work.
+    // ================================================================
+    if adapter_type == "geo_harness" {
+        // Create routine_runs record if this is a routine invocation
+        if let Some(rid) = routine_id {
+            let run_id = Uuid::new_v4().to_string();
+            let _ = sqlx::query(
+                "INSERT INTO routine_runs (id, routine_id, agent_id, company_id, issue_id, triggered_by, status, started_at)
+                 VALUES (?, ?, ?, ?, ?, ?, 'dispatched', strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))"
+            )
+                .bind(&run_id)
+                .bind(rid)
+                .bind(agent_id)
+                .bind(&company_id)
+                .bind(issue_id)
+                .bind(triggered_by)
+                .execute(&state.pool)
+                .await;
+        }
+
+        tracing::info!(
+            "Dispatched issue {} to agent {} ({}) via geo_harness [triggered_by={}]",
+            issue_id.unwrap_or("none"),
+            agent.name,
+            agent_id,
+            triggered_by,
+        );
+
+        return InvokeResult {
+            success: true,
+            output: format!("Dispatched to geo_harness worker: {}", agent.name),
+            duration_ms: start.elapsed().as_millis() as u64,
+            invocation_id: Some(invocation_id),
+            dispatched: true,
+        };
+    }
+
+    // ================================================================
+    // hermes_local dispatch: spawn child process and wait for exit.
+    // ================================================================
 
     // Create routine_runs record if this is a routine invocation
     let routine_run_id = if let Some(rid) = routine_id {
@@ -150,14 +231,6 @@ pub async fn invoke_agent(
         args.join(" "),
         triggered_by,
     );
-
-    // Mark agent as running
-    let _ = sqlx::query(
-        "UPDATE agents SET status = 'running', last_heartbeat = strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?"
-    )
-        .bind(agent_id)
-        .execute(&state.pool)
-        .await;
 
     // Build the command
     let mut cmd = Command::new(command);
@@ -268,6 +341,7 @@ pub async fn invoke_agent(
                 output: combined,
                 duration_ms,
                 invocation_id: Some(invocation_id),
+                dispatched: false,
             }
         }
         Ok(Err(e)) => {
@@ -307,6 +381,7 @@ pub async fn invoke_agent(
                 output: format!("Failed to execute: {}", e),
                 duration_ms,
                 invocation_id: Some(invocation_id),
+                dispatched: false,
             }
         }
         Err(_) => {
@@ -343,6 +418,7 @@ pub async fn invoke_agent(
                 output: format!("Execution timed out after {}s", timeout_secs),
                 duration_ms,
                 invocation_id: Some(invocation_id),
+                dispatched: false,
             }
         }
     }

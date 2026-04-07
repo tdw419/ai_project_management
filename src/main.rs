@@ -40,6 +40,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     sqlx::query("PRAGMA foreign_keys=ON")
         .execute(&pool)
         .await?;
+    // SQLite busy timeout: wait up to 5 seconds for locks before SQLITE_BUSY
+    sqlx::query("PRAGMA busy_timeout=5000")
+        .execute(&pool)
+        .await?;
 
     sqlx::migrate!("./migrations")
         .run(&pool)
@@ -81,10 +85,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     tracing::info!("GeoForge listening on port {}", config.server.port);
 
     let shutdown = async {
-        tokio::signal::ctrl_c()
-            .await
-            .expect("failed to install Ctrl+C handler");
-        tracing::info!("Shutdown signal received, draining connections...");
+        if tokio::signal::ctrl_c().await.is_err() {
+            tracing::warn!("Ctrl+C handler failed, shutting down immediately");
+        } else {
+            tracing::info!("Shutdown signal received, draining connections...");
+        }
     };
 
     axum::serve(listener, app)
