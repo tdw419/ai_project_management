@@ -9,8 +9,9 @@ CREATE TABLE IF NOT EXISTS companies (
     status      TEXT NOT NULL DEFAULT 'active',
     issue_prefix TEXT NOT NULL DEFAULT 'GEO',
     issue_counter INTEGER NOT NULL DEFAULT 0,
-    created_at  TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
+    qa_gate      INTEGER NOT NULL DEFAULT 1,
+    created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
+    updated_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
 );
 
 -- Agents (AI workers)
@@ -30,8 +31,8 @@ CREATE TABLE IF NOT EXISTS agents (
     error_message   TEXT,
     health_status   TEXT NOT NULL DEFAULT 'unknown',
     health_check_at TEXT,
-    created_at      TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_at      TEXT NOT NULL DEFAULT (datetime('now'))
+    created_at      TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
+    updated_at      TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
 );
 CREATE INDEX IF NOT EXISTS idx_agents_company ON agents(company_id);
 CREATE INDEX IF NOT EXISTS idx_agents_company_status ON agents(company_id, status);
@@ -44,8 +45,8 @@ CREATE TABLE IF NOT EXISTS projects (
     description TEXT,
     status      TEXT NOT NULL DEFAULT 'in_progress',
     color       TEXT,
-    created_at  TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
+    created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
+    updated_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
 );
 CREATE INDEX IF NOT EXISTS idx_projects_company ON projects(company_id);
 
@@ -58,8 +59,8 @@ CREATE TABLE IF NOT EXISTS goals (
     level       TEXT NOT NULL DEFAULT 'task',
     status      TEXT NOT NULL DEFAULT 'planned',
     parent_id   TEXT REFERENCES goals(id),
-    created_at  TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
+    created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
+    updated_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
 );
 CREATE INDEX IF NOT EXISTS idx_goals_company ON goals(company_id);
 
@@ -69,7 +70,7 @@ CREATE TABLE IF NOT EXISTS labels (
     company_id  TEXT NOT NULL REFERENCES companies(id),
     name        TEXT NOT NULL,
     color       TEXT NOT NULL,
-    created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+    created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
 );
 CREATE INDEX IF NOT EXISTS idx_labels_company ON labels(company_id);
 
@@ -91,8 +92,8 @@ CREATE TABLE IF NOT EXISTS issues (
     blocked_by       TEXT DEFAULT '[]',
     started_at       TEXT,
     completed_at     TEXT,
-    created_at       TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_at       TEXT NOT NULL DEFAULT (datetime('now')),
+    created_at       TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
+    updated_at       TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
     CHECK (status IN ('backlog', 'todo', 'in_progress', 'in_review', 'done', 'cancelled')),
     CHECK (priority IN ('critical', 'high', 'medium', 'low'))
 );
@@ -115,7 +116,7 @@ CREATE TABLE IF NOT EXISTS issue_comments (
     body            TEXT NOT NULL,
     author_agent_id TEXT REFERENCES agents(id),
     author_user_id  TEXT,
-    created_at      TEXT NOT NULL DEFAULT (datetime('now'))
+    created_at      TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
 );
 CREATE INDEX IF NOT EXISTS idx_comments_issue ON issue_comments(issue_id);
 
@@ -131,8 +132,8 @@ CREATE TABLE IF NOT EXISTS routines (
     status            TEXT NOT NULL DEFAULT 'active',
     concurrency       TEXT NOT NULL DEFAULT 'skip_if_active',
     last_triggered_at TEXT,
-    created_at        TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_at        TEXT NOT NULL DEFAULT (datetime('now'))
+    created_at        TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
+    updated_at        TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
 );
 CREATE INDEX IF NOT EXISTS idx_routines_company ON routines(company_id);
 
@@ -146,7 +147,7 @@ CREATE TABLE IF NOT EXISTS activity_log (
     entity_type TEXT NOT NULL,
     entity_id   TEXT NOT NULL,
     details     TEXT,
-    created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+    created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
 );
 CREATE INDEX IF NOT EXISTS idx_activity_company ON activity_log(company_id);
 CREATE INDEX IF NOT EXISTS idx_activity_entity ON activity_log(entity_type, entity_id);

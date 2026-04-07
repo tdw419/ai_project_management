@@ -57,14 +57,27 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Run migrations
     let schema = include_str!("../migrations/001_init.sql");
     sqlx::raw_sql(schema).execute(&pool).await?;
+    let invocations_schema = include_str!("../migrations/002_invocations.sql");
+    sqlx::raw_sql(invocations_schema).execute(&pool).await?;
 
     let state = Arc::new(AppState::new(pool));
+
+    // Start background services
+    let health_state = state.clone();
+    tokio::spawn(async move {
+        services::health_monitor::run_health_monitor(health_state).await;
+    });
+
+    let scheduler_state = state.clone();
+    tokio::spawn(async move {
+        services::scheduler::run_scheduler(scheduler_state).await;
+    });
 
     let app = Router::new()
         // Health
         .route("/api/health", get(routes::health::health))
         // Companies
-        .route("/api/companies", get(routes::companies::list))
+        .route("/api/companies", get(routes::companies::list).post(routes::companies::create))
         .route("/api/companies/{cid}", get(routes::companies::get))
         .route("/api/companies/{cid}/dashboard", get(routes::companies::dashboard))
         // Agents
@@ -73,6 +86,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/api/companies/{cid}/agents", post(routes::agents::create))
         .route("/api/agents/{aid}", patch(routes::agents::update))
         .route("/api/agents/{aid}/wakeup", post(routes::agents::wakeup))
+        .route("/api/agents/{aid}/invoke", post(routes::agents::invoke))
+        .route("/api/agents/{aid}/heartbeat", post(routes::agents::heartbeat))
         // Issues
         .route("/api/companies/{cid}/issues", get(routes::issues::list))
         .route("/api/issues/{iid}", get(routes::issues::get))
@@ -85,8 +100,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         // Projects
         .route("/api/companies/{cid}/projects", get(routes::projects::list))
         .route("/api/projects/{pid}", get(routes::projects::get))
+        .route("/api/companies/{cid}/projects", post(routes::projects::create))
+        .route("/api/projects/{pid}", patch(routes::projects::update))
         // Goals
         .route("/api/companies/{cid}/goals", get(routes::goals::list))
+        .route("/api/companies/{cid}/goals", post(routes::goals::create))
+        .route("/api/goals/{gid}", patch(routes::goals::update))
         // Labels
         .route("/api/companies/{cid}/labels", get(routes::labels::list))
         .route("/api/companies/{cid}/labels", post(routes::labels::create))
@@ -94,8 +113,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/api/companies/{cid}/routines", get(routes::routines::list))
         .route("/api/companies/{cid}/routines", post(routes::routines::create))
         .route("/api/routines/{rid}", patch(routes::routines::update))
+        .route("/api/routines/{rid}/trigger", post(routes::routines::trigger))
         // Dispatch
         .route("/api/companies/{cid}/dispatch", post(routes::dispatch::dispatch))
+        // Activity log
+        .route("/api/companies/{cid}/activity", get(routes::activity::list))
         .layer(CorsLayer::permissive())
         .layer(TraceLayer::new_for_http())
         .with_state(state);

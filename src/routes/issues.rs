@@ -12,6 +12,8 @@ pub struct ListParams {
     pub project_id: Option<String>,
     pub assignee_agent_id: Option<String>,
     pub blocked: Option<String>,
+    pub limit: Option<i64>,
+    pub offset: Option<i64>,
 }
 
 pub async fn list(
@@ -36,6 +38,12 @@ pub async fn list(
     }
 
     sql.push_str(" ORDER BY created_at DESC");
+
+    let limit = params.limit.unwrap_or(100).min(500);
+    let offset = params.offset.unwrap_or(0);
+    sql.push_str(" LIMIT ? OFFSET ?");
+    bindings.push(limit.to_string());
+    bindings.push(offset.to_string());
 
     let mut query = sqlx::query_as::<_, Issue>(&sql);
     for b in &bindings {
@@ -71,7 +79,7 @@ pub async fn create(
 
     // Increment issue counter atomically
     let row: (i64,) = sqlx::query_as(
-        "UPDATE companies SET issue_counter = issue_counter + 1, updated_at = datetime('now') WHERE id = ? RETURNING issue_counter"
+        "UPDATE companies SET issue_counter = issue_counter + 1, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ? RETURNING issue_counter"
     )
         .bind(&cid)
         .fetch_one(&state.pool)
@@ -126,7 +134,14 @@ pub async fn update(
     // Validate status transition if status is changing
     if let Some(ref new_status) = body.status {
         if *new_status != issue.status {
-            state_machine::validate_transition(&issue.status, new_status)?;
+            // Fetch company for qa_gate setting
+            let company = sqlx::query_as::<_, crate::db::models::Company>(
+                "SELECT * FROM companies WHERE id = ?"
+            )
+                .bind(&issue.company_id)
+                .fetch_one(&state.pool)
+                .await?;
+            state_machine::validate_transition(&issue.status, new_status, company.qa_gate)?;
         }
     }
 
@@ -156,7 +171,7 @@ pub async fn update(
     sqlx::query(
         "UPDATE issues SET title = ?, description = ?, status = ?, priority = ?,
          assignee_agent_id = ?, project_id = ?, blocked_by = ?,
-         started_at = ?, completed_at = ?, updated_at = datetime('now')
+         started_at = ?, completed_at = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
          WHERE id = ?"
     )
         .bind(&title)
@@ -212,7 +227,7 @@ pub async fn checkout(
     let now = chrono::Utc::now().to_rfc3339();
     sqlx::query(
         "UPDATE issues SET status = 'in_progress', assignee_agent_id = ?,
-         started_at = ?, updated_at = datetime('now') WHERE id = ?"
+         started_at = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?"
     )
         .bind(&body.agent_id)
         .bind(&now)
@@ -285,32 +300,27 @@ pub async fn blockers(
         return Ok(Json(serde_json::json!({"blockers": [], "blocked": false})));
     }
 
-    // Find which blockers are still unresolved
-    let _unresolved: Vec<String> = sqlx::query_scalar(
-        "SELECT identifier FROM issues WHERE company_id = ? AND identifier IN (?) AND status NOT IN ('done', 'cancelled')"
-    )
-        .bind(&issue.company_id)
-        // SQLite doesn't support IN with bind params easily, so do it manually
-        .fetch_all(&state.pool)
-        .await
-        .unwrap_or_default();
-
-    // Manual filter since we can't do dynamic IN easily
-    let all_blocker_issues = query_as::<_, Issue>(
-        &format!(
-            "SELECT * FROM issues WHERE company_id = ? AND identifier IN ({})",
-            blocked_by.iter().map(|s| format!("'{}'", s)).collect::<Vec<_>>().join(",")
-        )
+    // Fetch ALL issues for this company and filter in Rust to avoid SQL injection.
+    // SQLite doesn't support dynamic IN() with parameterized queries anyway.
+    // For small-to-medium datasets this is fine; for large ones, consider a
+    // join table or a dedicated blocked_by table.
+    let all_company_issues = query_as::<_, Issue>(
+        "SELECT id, identifier, status FROM issues WHERE company_id = ?"
     )
         .bind(&issue.company_id)
         .fetch_all(&state.pool)
         .await
         .unwrap_or_default();
 
-    let unresolved: Vec<String> = all_blocker_issues
+    let unresolved: Vec<String> = all_company_issues
         .iter()
-        .filter(|i| i.status != "done" && i.status != "cancelled")
-        .map(|i| i.identifier.clone().unwrap_or_default())
+        .filter(|i| {
+            // Must be in the blocked_by list AND not resolved
+            i.identifier.as_ref().map_or(false, |ident| blocked_by.contains(ident))
+                && i.status != "done"
+                && i.status != "cancelled"
+        })
+        .filter_map(|i| i.identifier.clone())
         .collect();
 
     Ok(Json(serde_json::json!({
@@ -359,17 +369,15 @@ async fn check_unblock_dependents(state: &SharedState, company_id: &str, identif
             .and_then(|s| serde_json::from_str(s).ok())
             .unwrap_or_default();
 
-        // Check if all deps are resolved
-        let all_resolved = deps.iter().all(|dep| {
-            // Check if this dep is done or cancelled
-            // For simplicity, check if the completed identifier is in the deps
-            dep == ident || dep.starts_with("done:")
-        });
+        // P0-3 fix: Query the DB to verify ALL deps are actually in done/cancelled status.
+        // The old code only checked if dep == ident (the just-completed issue), which
+        // breaks multi-dep chains where other blockers haven't been resolved yet.
+        let all_resolved = are_all_deps_resolved(state, company_id, &deps).await;
 
         if all_resolved {
             // Auto-promote to todo
             let _ = sqlx::query(
-                "UPDATE issues SET status = 'todo', updated_at = datetime('now') WHERE id = ?"
+                "UPDATE issues SET status = 'todo', updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?"
             )
                 .bind(&issue.id)
                 .execute(&state.pool)
@@ -378,6 +386,42 @@ async fn check_unblock_dependents(state: &SharedState, company_id: &str, identif
             tracing::info!("Auto-promoted {} to todo (all blockers resolved)", issue.identifier.unwrap_or_default());
         }
     }
+}
+
+/// Check if all dependency identifiers are resolved (done or cancelled).
+async fn are_all_deps_resolved(state: &SharedState, company_id: &str, deps: &[String]) -> bool {
+    if deps.is_empty() {
+        return true;
+    }
+
+    for dep in deps {
+        // Look up each dependency by identifier in the same company
+        let issue = query_as::<_, Issue>(
+            "SELECT * FROM issues WHERE company_id = ? AND identifier = ?"
+        )
+            .bind(company_id)
+            .bind(dep)
+            .fetch_optional(&state.pool)
+            .await;
+
+        match issue {
+            Ok(Some(i)) => {
+                if i.status != "done" && i.status != "cancelled" {
+                    return false;
+                }
+            }
+            Ok(None) => {
+                // Unknown dependency -- treat as unresolved to be safe
+                tracing::warn!("Unknown dependency '{}' referenced in blocked_by", dep);
+                return false;
+            }
+            Err(e) => {
+                tracing::error!("Error checking dependency '{}': {}", dep, e);
+                return false;
+            }
+        }
+    }
+    true
 }
 
 async fn log_activity(

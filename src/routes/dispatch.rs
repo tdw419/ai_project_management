@@ -60,7 +60,7 @@ pub async fn dispatch(
     let now = chrono::Utc::now().to_rfc3339();
     sqlx::query(
         "UPDATE issues SET status = 'in_progress', assignee_agent_id = ?,
-         started_at = ?, updated_at = datetime('now') WHERE id = ?"
+         started_at = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?"
     )
         .bind(&agent.id)
         .bind(&now)

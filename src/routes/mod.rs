@@ -7,3 +7,4 @@ pub mod goals;
 pub mod labels;
 pub mod routines;
 pub mod dispatch;
+pub mod activity;

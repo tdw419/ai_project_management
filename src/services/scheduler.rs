@@ -1,0 +1,250 @@
+use crate::SharedState;
+use crate::services::executor;
+use crate::services::timestamps::parse_timestamp;
+use cron::Schedule;
+use std::time::Duration;
+
+/// Run the scheduler loop.
+/// Scans active routines, evaluates their cron expressions, and triggers
+/// agent invocations when it's time.
+pub async fn run_scheduler(state: SharedState) {
+    let poll_interval_secs = std::env::var("GEOFORGE_SCHEDULER_INTERVAL")
+        .ok()
+        .and_then(|v| v.parse().ok())
+        .unwrap_or(30);
+
+    tracing::info!(
+        "Scheduler started (polling every {}s)",
+        poll_interval_secs,
+    );
+
+    let mut interval = tokio::time::interval(
+        Duration::from_secs(poll_interval_secs)
+    );
+
+    loop {
+        interval.tick().await;
+
+        if let Err(e) = poll_routines(&state).await {
+            tracing::error!("Scheduler error: {}", e);
+        }
+    }
+}
+
+async fn poll_routines(state: &SharedState) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    let routines = sqlx::query_as::<_, crate::db::models::Routine>(
+        "SELECT * FROM routines WHERE status = 'active'"
+    )
+        .fetch_all(&state.pool)
+        .await?;
+
+    let now = chrono::Utc::now();
+
+    for routine in &routines {
+        if let Err(e) = process_routine(state, routine, &now).await {
+            tracing::error!(
+                "Error processing routine {} ({}): {}",
+                routine.id,
+                routine.title,
+                e
+            );
+        }
+    }
+
+    Ok(())
+}
+
+async fn process_routine(
+    state: &SharedState,
+    routine: &crate::db::models::Routine,
+    now: &chrono::DateTime<chrono::Utc>,
+) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    let cron_expr = match &routine.cron_expression {
+        Some(expr) => expr.clone(),
+        None => return Ok(()), // No cron = manual trigger only
+    };
+
+    // Parse the cron expression
+    let schedule = match cron_expr.parse::<Schedule>() {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::warn!("Invalid cron expression for routine {}: {}", routine.id, e);
+            return Ok(());
+        }
+    };
+
+    // Check if we should trigger based on last_triggered_at
+    let last_triggered = routine.last_triggered_at
+        .as_ref()
+        .and_then(|s| parse_timestamp(s));
+
+    // Find the most recent fire time before now
+    let should_trigger = should_fire(&schedule, last_triggered.as_ref(), now);
+
+    if !should_trigger {
+        return Ok(());
+    }
+
+    // Check concurrency policy
+    let should_skip = match routine.concurrency.as_str() {
+        "skip_if_active" => {
+            // Check if agent is already running
+            let agent = sqlx::query_as::<_, crate::db::models::Agent>(
+                "SELECT * FROM agents WHERE id = ?"
+            )
+                .bind(&routine.assignee_agent_id)
+                .fetch_optional(&state.pool)
+                .await?;
+
+            agent.map(|a| a.status == "running").unwrap_or(false)
+        }
+        "queue" => false,
+        _ => false,
+    };
+
+    if should_skip {
+        tracing::debug!(
+            "Skipping routine {} -- agent {} is active",
+            routine.title,
+            routine.assignee_agent_id,
+        );
+        return Ok(());
+    }
+
+    // Find the next available todo issue for this agent (if project-scoped)
+    let issue_id = find_issue_for_routine(state, routine).await?;
+
+    tracing::info!(
+        "Triggering routine '{}' for agent {}{}",
+        routine.title,
+        routine.assignee_agent_id,
+        issue_id.as_ref().map(|id| format!(" (issue {})", id)).unwrap_or_default(),
+    );
+
+    // Update last_triggered_at BEFORE spawning, so we don't re-trigger
+    sqlx::query(
+        "UPDATE routines SET last_triggered_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?"
+    )
+        .bind(&routine.id)
+        .execute(&state.pool)
+        .await?;
+
+    // Spawn the invocation so it doesn't block other routine polls (P0-4 fix)
+    let state_clone = state.clone();
+    let agent_id = routine.assignee_agent_id.clone();
+    let routine_title = routine.title.clone();
+    let routine_id = routine.id.clone();
+    tokio::spawn(async move {
+        let result = executor::invoke_agent(
+            &state_clone,
+            &agent_id,
+            issue_id.as_deref(),
+            "routine",
+            Some(&routine_id),
+        )
+            .await;
+
+        if result.success {
+            tracing::info!(
+                "Routine '{}' completed successfully in {}ms",
+                routine_title,
+                result.duration_ms,
+            );
+        } else {
+            tracing::warn!(
+                "Routine '{}' failed: {}",
+                routine_title,
+                result.output.chars().take(200).collect::<String>(),
+            );
+        }
+    });
+
+    Ok(())
+}
+
+/// Determine if a cron schedule should fire given the last trigger time and current time.
+///
+/// P0-5 fix: When `last_triggered` is None (never triggered), we don't fire immediately.
+/// Instead, we check if there was a missed fire time between (now - period) and now.
+/// For first startup, we skip so the routine waits for its next natural schedule.
+fn should_fire(
+    schedule: &Schedule,
+    last_triggered: Option<&chrono::DateTime<chrono::Utc>>,
+    now: &chrono::DateTime<chrono::Utc>,
+) -> bool {
+    match last_triggered {
+        None => {
+            // Never triggered -- do NOT fire immediately on first startup.
+            // The routine will fire at its next scheduled time.
+            false
+        }
+        Some(last) => {
+            // Find the next fire time after last_triggered
+            let next_after_last = schedule.after(last).next();
+            match next_after_last {
+                // Fire if the scheduled time after last is before or equal to now
+                Some(fire_time) => fire_time <= *now,
+                None => false,
+            }
+        }
+    }
+}
+
+/// Find the best issue to work on for a routine.
+/// If the routine is project-scoped, find a todo issue in that project.
+/// Otherwise, find any todo issue assigned to the agent.
+async fn find_issue_for_routine(
+    state: &SharedState,
+    routine: &crate::db::models::Routine,
+) -> Result<Option<String>, sqlx::Error> {
+    let issue = if let Some(ref project_id) = routine.project_id {
+        sqlx::query_as::<_, crate::db::models::Issue>(
+            "SELECT * FROM issues WHERE company_id = ? AND project_id = ? AND status = 'todo' ORDER BY created_at LIMIT 1"
+        )
+            .bind(&routine.company_id)
+            .bind(project_id)
+            .fetch_optional(&state.pool)
+            .await?
+    } else {
+        sqlx::query_as::<_, crate::db::models::Issue>(
+            "SELECT * FROM issues WHERE company_id = ? AND (assignee_agent_id = ? OR assignee_agent_id IS NULL) AND status = 'todo' ORDER BY created_at LIMIT 1"
+        )
+            .bind(&routine.company_id)
+            .bind(&routine.assignee_agent_id)
+            .fetch_optional(&state.pool)
+            .await?
+    };
+
+    Ok(issue.map(|i| i.id))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_should_fire_never_triggered_returns_false() {
+        let schedule = "0 */5 * * * *".parse::<Schedule>().unwrap();
+        let now = chrono::Utc::now();
+        // P0-5 fix: should NOT fire when never triggered
+        assert!(!should_fire(&schedule, None, &now));
+    }
+
+    #[test]
+    fn test_should_fire_after_last_triggered() {
+        let schedule = "0 */5 * * * *".parse::<Schedule>().unwrap();
+        let now = chrono::Utc::now();
+        let last = now - chrono::Duration::minutes(10);
+        // Should fire since 10 minutes have passed
+        assert!(should_fire(&schedule, Some(&last), &now));
+    }
+
+    #[test]
+    fn test_should_not_fire_when_too_recent() {
+        let schedule = "0 0 * * * *".parse::<Schedule>().unwrap(); // hourly
+        let now = chrono::Utc::now();
+        let last = now - chrono::Duration::seconds(30);
+        // Should NOT fire since we just triggered 30 seconds ago
+        assert!(!should_fire(&schedule, Some(&last), &now));
+    }
+}

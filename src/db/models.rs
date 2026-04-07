@@ -10,6 +10,7 @@ pub struct Company {
     pub status: String,
     pub issue_prefix: String,
     pub issue_counter: i64,
+    pub qa_gate: bool,
     pub created_at: String,
     pub updated_at: String,
 }
@@ -130,7 +131,31 @@ pub struct ActivityLog {
     pub created_at: String,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct Invocation {
+    pub id: String,
+    pub agent_id: String,
+    pub company_id: String,
+    pub issue_id: Option<String>,
+    pub routine_id: Option<String>,
+    pub started_at: String,
+    pub completed_at: Option<String>,
+    pub exit_code: Option<i64>,
+    pub success: bool,
+    pub output_truncated: Option<String>,
+    pub triggered_by: String,
+    pub duration_ms: Option<i64>,
+}
+
 // -- Request/Response DTOs --
+
+#[derive(Debug, Deserialize)]
+pub struct CreateCompanyRequest {
+    pub name: String,
+    pub description: Option<String>,
+    pub issue_prefix: Option<String>,
+    pub qa_gate: Option<bool>,
+}
 
 #[derive(Debug, Deserialize)]
 pub struct CreateAgentRequest {

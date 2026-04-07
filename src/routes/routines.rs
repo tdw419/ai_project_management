@@ -64,7 +64,7 @@ pub async fn update(
         .map(|s| s.to_string()).or(existing.cron_expression);
 
     sqlx::query(
-        "UPDATE routines SET title = ?, status = ?, cron_expression = ?, updated_at = datetime('now') WHERE id = ?"
+        "UPDATE routines SET title = ?, status = ?, cron_expression = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?"
     )
         .bind(&title)
         .bind(&status)
@@ -78,4 +78,72 @@ pub async fn update(
         .fetch_one(&state.pool)
         .await?;
     Ok(Json(routine))
+}
+
+/// Manually trigger a routine (bypasses cron schedule).
+pub async fn trigger(
+    State(state): State<SharedState>,
+    Path(rid): Path<String>,
+) -> AppResult<Json<serde_json::Value>> {
+    let routine = query_as::<_, Routine>("SELECT * FROM routines WHERE id = ?")
+        .bind(&rid)
+        .fetch_optional(&state.pool)
+        .await?
+        .ok_or_else(|| crate::error::AppError::NotFound(format!("Routine {} not found", rid)))?;
+
+    // Find issue for the routine
+    let issue = if let Some(ref project_id) = routine.project_id {
+        sqlx::query_as::<_, crate::db::models::Issue>(
+            "SELECT * FROM issues WHERE company_id = ? AND project_id = ? AND status = 'todo' ORDER BY created_at LIMIT 1"
+        )
+            .bind(&routine.company_id)
+            .bind(project_id)
+            .fetch_optional(&state.pool)
+            .await?
+    } else {
+        sqlx::query_as::<_, crate::db::models::Issue>(
+            "SELECT * FROM issues WHERE company_id = ? AND (assignee_agent_id = ? OR assignee_agent_id IS NULL) AND status = 'todo' ORDER BY created_at LIMIT 1"
+        )
+            .bind(&routine.company_id)
+            .bind(&routine.assignee_agent_id)
+            .fetch_optional(&state.pool)
+            .await?
+    };
+
+    let issue_id = issue.as_ref().map(|i| i.id.clone());
+    let issue_id_spawn = issue_id.clone();
+
+    // Update last_triggered_at
+    sqlx::query(
+        "UPDATE routines SET last_triggered_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?"
+    )
+        .bind(&rid)
+        .execute(&state.pool)
+        .await?;
+
+    // Spawn invocation in background
+    let invoke_state = state.clone();
+    let agent_id = routine.assignee_agent_id.clone();
+    let rid_spawn = rid.to_string();
+    tokio::spawn(async move {
+        let result = crate::services::executor::invoke_agent(
+            &invoke_state,
+            &agent_id,
+            issue_id_spawn.as_deref(),
+            "routine",
+            Some(&rid_spawn),
+        ).await;
+        if result.success {
+            tracing::info!("Routine trigger for agent {} completed", agent_id);
+        } else {
+            tracing::warn!("Routine trigger for agent {} failed: {}", agent_id, result.output.chars().take(200).collect::<String>());
+        }
+    });
+
+    Ok(Json(serde_json::json!({
+        "status": "accepted",
+        "routineId": rid,
+        "agentId": routine.assignee_agent_id,
+        "issueId": issue_id,
+    })))
 }

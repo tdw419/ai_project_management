@@ -1,14 +1,41 @@
 use axum::{extract::{Path, State}, response::Json};
 use serde_json::{json, Value};
 use sqlx::query_as;
+use uuid::Uuid;
 use crate::{AppResult, SharedState};
-use crate::db::models::{Company, AgentSummary, TaskSummary};
+use crate::db::models::{Company, AgentSummary, TaskSummary, CreateCompanyRequest};
 
 pub async fn list(State(state): State<SharedState>) -> AppResult<Json<Vec<Company>>> {
     let companies = query_as::<_, Company>("SELECT * FROM companies ORDER BY created_at")
         .fetch_all(&state.pool)
         .await?;
     Ok(Json(companies))
+}
+
+pub async fn create(
+    State(state): State<SharedState>,
+    Json(body): Json<CreateCompanyRequest>,
+) -> AppResult<Json<Company>> {
+    let id = Uuid::new_v4().to_string();
+    let issue_prefix = body.issue_prefix.unwrap_or_else(|| "GEO".to_string());
+    let qa_gate = body.qa_gate.unwrap_or(true);
+
+    sqlx::query(
+        "INSERT INTO companies (id, name, description, issue_prefix, qa_gate) VALUES (?, ?, ?, ?, ?)"
+    )
+        .bind(&id)
+        .bind(&body.name)
+        .bind(&body.description)
+        .bind(&issue_prefix)
+        .bind(qa_gate)
+        .execute(&state.pool)
+        .await?;
+
+    let company = query_as::<_, Company>("SELECT * FROM companies WHERE id = ?")
+        .bind(&id)
+        .fetch_one(&state.pool)
+        .await?;
+    Ok(Json(company))
 }
 
 pub async fn get(
