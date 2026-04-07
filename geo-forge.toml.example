@@ -1,0 +1,26 @@
+# GeoForge Configuration
+# Copy to geo-forge.toml and customize.
+# All fields have defaults -- this file is optional.
+
+[server]
+port = 3101
+db_path = "geo_forge.db"
+
+[rate_limit]
+max = 100
+refill_per_sec = 10
+
+[scheduler]
+interval_secs = 30
+
+[health]
+check_interval_secs = 60
+stale_threshold_secs = 300
+dead_threshold_secs = 1800
+
+[logging]
+format = "text"       # "text" or "json"
+level = "geo_forge=debug,sqlx=warn"
+
+[cors]
+origins = ""          # empty = allow all, or "http://localhost:3000,http://localhost:8080"

@@ -1,4 +1,5 @@
 pub mod health;
+pub mod metrics;
 pub mod companies;
 pub mod agents;
 pub mod issues;

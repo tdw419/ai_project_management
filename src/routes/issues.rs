@@ -352,10 +352,8 @@ pub async fn blockers(
 
     // Fetch ALL issues for this company and filter in Rust to avoid SQL injection.
     // SQLite doesn't support dynamic IN() with parameterized queries anyway.
-    // For small-to-medium datasets this is fine; for large ones, consider a
-    // join table or a dedicated blocked_by table.
     let all_company_issues = query_as::<_, Issue>(
-        "SELECT id, identifier, status FROM issues WHERE company_id = ?"
+        "SELECT * FROM issues WHERE company_id = ?"
     )
         .bind(&issue.company_id)
         .fetch_all(&state.pool)

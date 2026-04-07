@@ -1,52 +1,39 @@
-use std::sync::Arc;
-
-use axum::Router;
-use axum::routing::{delete, get, patch, post};
-use sqlx::SqlitePool;
-use tower_http::cors::CorsLayer;
-use tower_http::trace::TraceLayer;
-
-mod db;
-mod routes;
-mod services;
-mod error;
-mod state_machine;
-
-pub use error::{AppError, AppResult};
-
-pub struct AppState {
-    pub pool: SqlitePool,
-}
-
-impl AppState {
-    pub fn new(pool: SqlitePool) -> Self {
-        Self { pool }
-    }
-}
-
-pub type SharedState = Arc<AppState>;
+use geo_forge::config::Config;
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    tracing_subscriber::fmt()
-        .with_env_filter("geo_forge=debug,sqlx=warn")
-        .init();
+async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    let config = Config::load()?;
 
-    let db_path = std::env::var("GEOFORGE_DB")
-        .unwrap_or_else(|_| "geo_forge.db".to_string());
+    // Initialize logging based on config
+    let env_filter = config.logging.level.clone();
+    match config.logging.format.as_str() {
+        "json" => {
+            tracing_subscriber::fmt()
+                .json()
+                .with_env_filter(env_filter)
+                .init();
+        }
+        _ => {
+            tracing_subscriber::fmt()
+                .with_env_filter(env_filter)
+                .init();
+        }
+    }
 
-    let connection_string = if db_path.starts_with("sqlite:") {
-        db_path
+    tracing::info!(
+        db_path = %config.server.db_path,
+        port = config.server.port,
+        "GeoForge starting"
+    );
+
+    let connection_string = if config.server.db_path.starts_with("sqlite:") {
+        config.server.db_path.clone()
     } else {
-        format!("sqlite:{}?mode=rwc", db_path)
+        format!("sqlite:{}?mode=rwc", config.server.db_path)
     };
 
-    tracing::info!("Connecting to {}", connection_string);
+    let pool = sqlx::SqlitePool::connect(&connection_string).await?;
 
-    let pool = SqlitePool::connect(&connection_string)
-        .await?;
-
-    // Enable WAL mode and foreign keys
     sqlx::query("PRAGMA journal_mode=WAL")
         .execute(&pool)
         .await?;
@@ -54,84 +41,56 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .execute(&pool)
         .await?;
 
-    // Run migrations via sqlx::migrate! (tracks applied migrations in _sqlx_migrations table)
     sqlx::migrate!("./migrations")
         .run(&pool)
         .await?;
 
-    let state = Arc::new(AppState::new(pool));
+    let state = std::sync::Arc::new(geo_forge::AppState::new(pool));
 
     // Start background services
     let health_state = state.clone();
+    let health_cfg = config.health.clone();
     tokio::spawn(async move {
-        services::health_monitor::run_health_monitor(health_state).await;
+        geo_forge::services::health_monitor::run_health_monitor(health_state, &health_cfg).await;
     });
 
     let scheduler_state = state.clone();
+    let scheduler_interval = config.scheduler.interval_secs;
     tokio::spawn(async move {
-        services::scheduler::run_scheduler(scheduler_state).await;
+        geo_forge::services::scheduler::run_scheduler(scheduler_state, scheduler_interval).await;
     });
 
-    let app = Router::new()
-        // Health
-        .route("/api/health", get(routes::health::health))
-        // Companies
-        .route("/api/companies", get(routes::companies::list).post(routes::companies::create))
-        .route("/api/companies/{cid}", get(routes::companies::get))
-        .route("/api/companies/{cid}/dashboard", get(routes::companies::dashboard))
-        // Agents
-        .route("/api/companies/{cid}/agents", get(routes::agents::list))
-        .route("/api/agents/{aid}", get(routes::agents::get))
-        .route("/api/companies/{cid}/agents", post(routes::agents::create))
-        .route("/api/agents/{aid}", patch(routes::agents::update))
-        .route("/api/agents/{aid}", delete(routes::agents::delete))
-        .route("/api/agents/{aid}/wakeup", post(routes::agents::wakeup))
-        .route("/api/agents/{aid}/invoke", post(routes::agents::invoke))
-        .route("/api/agents/{aid}/heartbeat", post(routes::agents::heartbeat))
-        // Issues
-        .route("/api/companies/{cid}/issues", get(routes::issues::list))
-        .route("/api/issues/{iid}", get(routes::issues::get))
-        .route("/api/companies/{cid}/issues", post(routes::issues::create))
-        .route("/api/issues/{iid}", patch(routes::issues::update))
-        .route("/api/issues/{iid}", delete(routes::issues::delete))
-        .route("/api/issues/{iid}/checkout", post(routes::issues::checkout))
-        .route("/api/issues/{iid}/comments", get(routes::issues::list_comments))
-        .route("/api/issues/{iid}/comments", post(routes::issues::create_comment))
-        .route("/api/issues/{iid}/blockers", get(routes::issues::blockers))
-        // Projects
-        .route("/api/companies/{cid}/projects", get(routes::projects::list))
-        .route("/api/projects/{pid}", get(routes::projects::get))
-        .route("/api/companies/{cid}/projects", post(routes::projects::create))
-        .route("/api/projects/{pid}", patch(routes::projects::update))
-        // Goals
-        .route("/api/companies/{cid}/goals", get(routes::goals::list))
-        .route("/api/companies/{cid}/goals", post(routes::goals::create))
-        .route("/api/goals/{gid}", patch(routes::goals::update))
-        // Labels
-        .route("/api/companies/{cid}/labels", get(routes::labels::list))
-        .route("/api/companies/{cid}/labels", post(routes::labels::create))
-        // Routines
-        .route("/api/companies/{cid}/routines", get(routes::routines::list))
-        .route("/api/companies/{cid}/routines", post(routes::routines::create))
-        .route("/api/routines/{rid}", patch(routes::routines::update))
-        .route("/api/routines/{rid}", delete(routes::routines::delete))
-        .route("/api/routines/{rid}/trigger", post(routes::routines::trigger))
-        // Dispatch
-        .route("/api/companies/{cid}/dispatch", post(routes::dispatch::dispatch))
-        // Activity log
-        .route("/api/companies/{cid}/activity", get(routes::activity::list))
-        .layer(CorsLayer::permissive())
-        .layer(TraceLayer::new_for_http())
-        .with_state(state);
+    let rate_max = config.rate_limit.max;
+    let rate_refill = config.rate_limit.refill_per_sec;
 
-    let port: u16 = std::env::var("GEOFORGE_PORT")
-        .unwrap_or_else(|_| "3101".to_string())
-        .parse()
-        .unwrap_or(3101);
+    let limiter = geo_forge::middleware::rate_limit::RateLimitLayer::new(rate_max, rate_refill)
+        .limiter().clone();
+    tokio::spawn(geo_forge::middleware::rate_limit::run_prune_task(
+        limiter, 60, 300,
+    ));
 
-    let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", port)).await?;
-    tracing::info!("GeoForge listening on port {}", port);
-    axum::serve(listener, app).await?;
+    tracing::info!(
+        max = rate_max,
+        refill = rate_refill,
+        "Rate limiter configured"
+    );
 
+    let app = geo_forge::app::build_router(state, rate_max, rate_refill, &config.cors.origins);
+
+    let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", config.server.port)).await?;
+    tracing::info!("GeoForge listening on port {}", config.server.port);
+
+    let shutdown = async {
+        tokio::signal::ctrl_c()
+            .await
+            .expect("failed to install Ctrl+C handler");
+        tracing::info!("Shutdown signal received, draining connections...");
+    };
+
+    axum::serve(listener, app)
+        .with_graceful_shutdown(shutdown)
+        .await?;
+
+    tracing::info!("GeoForge shut down cleanly");
     Ok(())
 }

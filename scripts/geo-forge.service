@@ -1,0 +1,26 @@
+[Unit]
+Description=GeoForge - Geometry OS Agent Orchestrator
+After=network.target
+
+[Service]
+Type=simple
+User=jericho
+WorkingDirectory=/home/jericho/zion/projects/geo-forge
+ExecStart=/home/jericho/zion/projects/geo-forge/target/release/geo-forge
+Restart=on-failure
+RestartSec=5
+
+# Config
+Environment=GEOFORGE_CONFIG=/home/jericho/zion/projects/geo-forge/geo-forge.toml
+EnvironmentFile=-/home/jericho/zion/projects/geo-forge/geo-forge.env
+
+# Logging (journalctl -u geo-forge -f)
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=geo-forge
+
+# Resource limits
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

@@ -7,12 +7,7 @@ use std::time::Duration;
 /// Run the scheduler loop.
 /// Scans active routines, evaluates their cron expressions, and triggers
 /// agent invocations when it's time.
-pub async fn run_scheduler(state: SharedState) {
-    let poll_interval_secs = std::env::var("GEOFORGE_SCHEDULER_INTERVAL")
-        .ok()
-        .and_then(|v| v.parse().ok())
-        .unwrap_or(30);
-
+pub async fn run_scheduler(state: SharedState, poll_interval_secs: u64) {
     tracing::info!(
         "Scheduler started (polling every {}s)",
         poll_interval_secs,

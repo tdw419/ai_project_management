@@ -1,31 +1,13 @@
 use crate::SharedState;
+use crate::config::HealthConfig;
 use crate::services::timestamps::parse_timestamp;
-
-/// Health thresholds (configurable via environment at startup).
-fn stale_threshold_secs() -> u64 {
-    std::env::var("GEOFORGE_STALE_SECS")
-        .ok()
-        .and_then(|v| v.parse().ok())
-        .unwrap_or(300)
-}
-
-fn dead_threshold_secs() -> u64 {
-    std::env::var("GEOFORGE_DEAD_SECS")
-        .ok()
-        .and_then(|v| v.parse().ok())
-        .unwrap_or(1800)
-}
 
 /// Run the health monitor as a background task.
 /// Checks all active agents periodically and updates their health_status.
-pub async fn run_health_monitor(state: SharedState) {
-    let check_interval_secs = std::env::var("GEOFORGE_HEALTH_INTERVAL")
-        .ok()
-        .and_then(|v| v.parse().ok())
-        .unwrap_or(60);
-
-    let stale = stale_threshold_secs();
-    let dead = dead_threshold_secs();
+pub async fn run_health_monitor(state: SharedState, cfg: &HealthConfig) {
+    let check_interval_secs = cfg.check_interval_secs;
+    let stale = cfg.stale_threshold_secs;
+    let dead = cfg.dead_threshold_secs;
 
     tracing::info!(
         "Health monitor started (checking every {}s, stale={}s, dead={}s)",
@@ -41,13 +23,13 @@ pub async fn run_health_monitor(state: SharedState) {
     loop {
         interval.tick().await;
 
-        if let Err(e) = check_agents(&state).await {
+        if let Err(e) = check_agents(&state, stale, dead).await {
             tracing::error!("Health monitor error: {}", e);
         }
     }
 }
 
-async fn check_agents(state: &SharedState) -> Result<(), sqlx::Error> {
+async fn check_agents(state: &SharedState, stale_secs: u64, dead_secs: u64) -> Result<(), sqlx::Error> {
     let agents = sqlx::query_as::<_, crate::db::models::Agent>(
         "SELECT * FROM agents WHERE status NOT IN ('paused')"
     )
@@ -55,8 +37,6 @@ async fn check_agents(state: &SharedState) -> Result<(), sqlx::Error> {
         .await?;
 
     let now = chrono::Utc::now();
-    let stale_secs = stale_threshold_secs();
-    let dead_secs = dead_threshold_secs();
     let mut stale_count = 0u32;
     let mut dead_count = 0u32;
     let mut healthy_count = 0u32;
