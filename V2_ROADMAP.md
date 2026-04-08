@@ -119,5 +119,5 @@ To roll back: switch branch to main, tag v1-stable is always there.
 v2 is done when:
 - [x] A worker starts working within 1 second of an issue being created (webhooks) -- V2-P1 DONE
 - [x] A worker references past outcomes when solving a new issue (memory) -- V2-P2 DONE
-- [ ] Jericho can inject guidance into a running worker (injection channel)
+- [x] Jericho can inject guidance into a running worker (injection channel) -- V2-P3 DONE
 - [ ] Adding a new tool is "create a directory with manifest.yaml" (tool packs)
