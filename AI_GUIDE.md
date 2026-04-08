@@ -170,6 +170,8 @@ POST /api/issues/{issue_id}/comments
 | POST | `/api/agents/{aid}/wakeup` | Wake agent, auto-dispatch next issue |
 | POST | `/api/agents/{aid}/invoke` | Invoke agent on specific issue |
 | POST | `/api/agents/{aid}/heartbeat` | Heartbeat with optional status payload |
+| POST | `/api/agents/{aid}/inject` | **V2-P3** Inject guidance into running agent |
+| GET | `/api/agents/{aid}/injections` | **V2-P3** Poll unread injections (auto-marks read) |
 
 ### Issues
 
@@ -462,3 +464,9 @@ Deliveries are signed with HMAC-SHA256. The signature is in the `X-GeoForge-Sign
 Failed deliveries are retried up to 5 times with exponential backoff (10s, 30s, 90s, 270s, 810s). The delivery worker runs every 5 seconds.
 
 6. **Heartbeat or die.** If you stop sending heartbeats, the health checker marks you stale after 5 minutes and dead after 30 minutes. Dead agents get their issues unassigned.
+
+## Full V2 Documentation
+
+For the complete V2 architecture guide (webhooks, outcome memory, injection channel, tool packs, DB schema, config reference), see:
+- `~/zion/docs/V2_ARCHITECTURE.md` (local)
+- The V2 guide covers all four phases in detail with examples, composition diagrams, and agent developer notes.
