@@ -49,11 +49,9 @@ Issues with `blocked_by` dependencies start in `backlog`. When all blockers reso
 
 The real Geometry OS company:
 ```
-company_id: 41e9e9c7-38b4-45a8-b2cc-c34206d7d86d
+company_id: bf5e14b1-da11-4bcf-9802-534ed23843ff
 issue_prefix: GEO
 ```
-
-Do NOT use the test company (43aec661-3439-4525-9914-ecd2f78c27c8, prefix GEOA).
 
 ## Quick Start: Agent Lifecycle
 
@@ -385,16 +383,17 @@ HTTP status codes:
 
 ## Registered Geometry OS Agents
 
-| Name | Role | Agent ID |
-|------|------|----------|
-| Engineer | engineer | 447d735e-7374-4748-939f-126c1071d749 |
-| RustEng | engineer | 059452a1-92fa-44fe-b591-b83f3d375c77 |
-| CEO | ceo | 4d484dfa-ffe0-4b8c-870c-c9b23eadaf5a |
-| QA | qa | 5ad57b5c-b21b-45fd-b719-87b5dbd22381 |
+Agents are dynamically registered by the geo-harness worker pool. Each run creates a fresh `geo-harness-worker` with role `engineer`. Check the current agents with:
+
+```bash
+GET /api/companies/bf5e14b1-da11-4bcf-9802-534ed23843ff/agents
+```
+
+There is no fixed roster -- agents come and go with each harness cycle.
 
 ## Gotchas
 
-1. **Two instances may be running.** Port 3101 is the harness-facing instance. Port 3100 may also be running. Always use 3101 for the real company (41e9e9c7).
+1. **Two instances may be running.** Port 3101 is the harness-facing instance. Port 3100 may also be running. Always use 3101 for the real company (bf5e14b1).
 
 2. **Issue identifiers are company-scoped.** "GEO-7" only resolves within the Geometry OS company. If you somehow have the wrong company_id, identifiers won't resolve.
 
@@ -403,5 +402,63 @@ HTTP status codes:
 4. **Auto-promotion fires on done/cancelled.** When an issue is resolved, all backlog issues that were only blocked by it automatically move to `todo`. This is logged as `issue.auto_promoted` in the activity log.
 
 5. **Dispatch prefers unassigned issues.** It picks the highest-priority `todo` issue with no assignee, then falls back to issues assigned to the dispatching agent.
+
+## V2: Webhooks & Events
+
+Geo-Forge v2 emits events on state changes and can push them to webhook subscribers. This is the Conway-inspired "wake the agent on events" pattern.
+
+### Event Types
+
+| Event Type | When Fired | Payload Fields |
+|:---|:---|:---|
+| `issue.created` | New issue created | issue_id, identifier, title, status, priority, assignee_agent_id |
+| `issue.status_changed` | Issue status updated | issue_id, identifier, old_status, new_status, assignee_agent_id |
+| `issue.assigned` | Issue assigned to agent | issue_id, identifier, old_assignee, new_assignee |
+
+### Webhook CRUD
+
+```bash
+# List webhooks for a company
+GET /api/companies/{cid}/webhooks
+
+# Create a webhook subscription
+POST /api/companies/{cid}/webhooks
+{
+  "event_type": "issue.*",       # glob: "issue.*", "agent.*", or exact "issue.created"
+  "target_url": "http://localhost:9876/webhook",
+  "secret": "optional-hmac-secret"
+}
+
+# Update a webhook
+PATCH /api/webhooks/{wid}
+{ "active": false }
+
+# Delete a webhook
+DELETE /api/webhooks/{wid}
+
+# Ping/test a webhook
+POST /api/webhooks/{wid}/ping
+
+# List deliveries for a webhook
+GET /api/webhooks/{wid}/deliveries
+
+# Retry a failed delivery
+POST /api/deliveries/{did}/redeliver
+```
+
+### Event Log
+
+```bash
+# Browse the event log
+GET /api/companies/{cid}/events?event_type=issue.status_changed&limit=20&since=2026-04-08T00:00:00Z
+```
+
+### Webhook Security
+
+Deliveries are signed with HMAC-SHA256. The signature is in the `X-GeoForge-Signature` header as `sha256=<hex>`. Verify with the webhook's secret. Additional headers: `X-GeoForge-Event` (event type) and `X-GeoForge-Delivery` (delivery ID).
+
+### Delivery Retry
+
+Failed deliveries are retried up to 5 times with exponential backoff (10s, 30s, 90s, 270s, 810s). The delivery worker runs every 5 seconds.
 
 6. **Heartbeat or die.** If you stop sending heartbeats, the health checker marks you stale after 5 minutes and dead after 30 minutes. Dead agents get their issues unassigned.

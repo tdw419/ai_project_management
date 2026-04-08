@@ -452,3 +452,79 @@ pub struct UpdatePromptTemplateRequest {
     pub prompt: Option<String>,
     pub description: Option<String>,
 }
+
+// -- V2: Events & Webhooks --
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct Event {
+    pub id: String,
+    pub company_id: String,
+    pub event_type: String,
+    pub payload: String, // JSON
+    pub created_at: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct Webhook {
+    pub id: String,
+    pub company_id: String,
+    pub event_type: String,
+    pub target_url: String,
+    pub secret: String,
+    pub active: bool,
+    pub headers: String, // JSON
+    pub created_at: String,
+    pub updated_at: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct WebhookDelivery {
+    pub id: String,
+    pub webhook_id: String,
+    pub event_id: String,
+    pub payload: String,
+    pub status: String,
+    pub response_code: Option<i64>,
+    pub response_body: Option<String>,
+    pub attempts: i64,
+    pub max_attempts: i64,
+    pub last_attempt_at: Option<String>,
+    pub next_retry_at: Option<String>,
+    pub created_at: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateWebhookRequest {
+    pub event_type: String,
+    pub target_url: String,
+    pub secret: Option<String>,
+    pub headers: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateWebhookRequest {
+    pub event_type: Option<String>,
+    pub target_url: Option<String>,
+    pub active: Option<bool>,
+    pub headers: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ListEventsParams {
+    pub event_type: Option<String>,
+    pub limit: Option<i64>,
+    pub offset: Option<i64>,
+    pub since: Option<String>, // ISO timestamp
+}
+
+/// Event payload for a state change event.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct StateChangeEvent {
+    pub event_type: String,
+    pub company_id: String,
+    pub entity_type: String,
+    pub entity_id: String,
+    pub old_value: Option<serde_json::Value>,
+    pub new_value: Option<serde_json::Value>,
+    pub timestamp: String,
+}

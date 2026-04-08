@@ -165,6 +165,18 @@ pub async fn create(
 
     log_activity(&state, &cid, "system", "geo-forge", "issue.created", "issue", &id, None).await;
 
+    // V2: Emit event
+    if let Some(ref bus) = state.event_bus {
+        bus.emit(&cid, "issue.created", serde_json::json!({
+            "issue_id": &id,
+            "identifier": &issue.identifier,
+            "title": &issue.title,
+            "status": &issue.status,
+            "priority": &issue.priority,
+            "assignee_agent_id": &issue.assignee_agent_id,
+        }));
+    }
+
     Ok(Json(issue))
 }
 
@@ -202,6 +214,9 @@ pub async fn update(
     let status = body.status.unwrap_or_else(|| issue.status.clone());
     let old_status = issue.status.clone();
     let priority = body.priority.unwrap_or_else(|| issue.priority.clone());
+    // V2: capture before move for event emission
+    let had_assignee_change = body.assignee_agent_id.is_some();
+    let old_assignee = issue.assignee_agent_id.clone();
     let assignee_agent_id = body.assignee_agent_id.or(issue.assignee_agent_id);
     let project_id = body.project_id.or(issue.project_id);
 
@@ -258,6 +273,32 @@ pub async fn update(
     log_activity(&state, &issue.company_id, "system", "geo-forge", "issue.updated", "issue", &issue.id,
         Some(serde_json::json!({"status": status, "identifier": updated.identifier}).to_string().into())
     ).await;
+
+    // V2: Emit event for status changes
+    if status != old_status {
+        if let Some(ref bus) = state.event_bus {
+            bus.emit(&issue.company_id, "issue.status_changed", serde_json::json!({
+                "issue_id": &issue.id,
+                "identifier": &updated.identifier,
+                "old_status": &old_status,
+                "new_status": &status,
+                "assignee_agent_id": &updated.assignee_agent_id,
+            }));
+        }
+    }
+
+    // V2: Emit event for assignment changes
+    let new_assignee = updated.assignee_agent_id.clone();
+    if had_assignee_change && old_assignee != new_assignee {
+        if let Some(ref bus) = state.event_bus {
+            bus.emit(&issue.company_id, "issue.assigned", serde_json::json!({
+                "issue_id": &issue.id,
+                "identifier": &updated.identifier,
+                "old_assignee": &old_assignee,
+                "new_assignee": &new_assignee,
+            }));
+        }
+    }
 
     Ok(Json(updated))
 }

@@ -83,6 +83,13 @@ pub fn build_router(state: SharedState, rate_max: u32, rate_refill: u32, cors_or
         .route("/api/specs/{sid}", get(crate::routes::specs::get).delete(crate::routes::specs::delete))
         .route("/api/specs/{sid}/import", post(crate::routes::specs::import))
         .route("/api/specs/{sid}/issues", get(crate::routes::specs::spec_issues))
+        // V2: Webhooks & Events
+        .route("/api/companies/{cid}/webhooks", get(crate::routes::webhooks::list_webhooks).post(crate::routes::webhooks::create_webhook))
+        .route("/api/webhooks/{wid}", patch(crate::routes::webhooks::update_webhook).delete(crate::routes::webhooks::delete_webhook))
+        .route("/api/webhooks/{wid}/ping", post(crate::routes::webhooks::ping))
+        .route("/api/webhooks/{wid}/deliveries", get(crate::routes::webhooks::list_deliveries))
+        .route("/api/deliveries/{did}/redeliver", post(crate::routes::webhooks::redeliver))
+        .route("/api/companies/{cid}/events", get(crate::routes::webhooks::list_events))
         // Middleware layers (order matters: outermost first)
         .layer(cors)
         .layer(TraceLayer::new_for_http())

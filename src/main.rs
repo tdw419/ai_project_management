@@ -49,7 +49,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         .run(&pool)
         .await?;
 
-    let state = std::sync::Arc::new(geo_forge::AppState::new(pool));
+    let state = std::sync::Arc::new({
+        let event_bus = geo_forge::services::event_bus::EventBus::spawn(pool.clone());
+        geo_forge::AppState::new(pool.clone()).with_event_bus(event_bus)
+    });
 
     // Start background services
     let health_state = state.clone();
@@ -62,6 +65,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let scheduler_interval = config.scheduler.interval_secs;
     tokio::spawn(async move {
         geo_forge::services::scheduler::run_scheduler(scheduler_state, scheduler_interval).await;
+    });
+
+    // V2: Webhook delivery worker
+    let delivery_pool = pool.clone();
+    tokio::spawn(async move {
+        geo_forge::services::event_bus::run_delivery_worker(delivery_pool, 5).await;
     });
 
     let rate_max = config.rate_limit.max;

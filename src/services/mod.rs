@@ -1,3 +1,4 @@
+pub mod event_bus;
 pub mod executor;
 pub mod health_monitor;
 pub mod scheduler;

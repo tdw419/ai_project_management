@@ -16,11 +16,17 @@ pub use error::{AppError, AppResult};
 
 pub struct AppState {
     pub pool: SqlitePool,
+    pub event_bus: Option<crate::services::event_bus::EventBus>,
 }
 
 impl AppState {
     pub fn new(pool: SqlitePool) -> Self {
-        Self { pool }
+        Self { pool, event_bus: None }
+    }
+
+    pub fn with_event_bus(mut self, bus: crate::services::event_bus::EventBus) -> Self {
+        self.event_bus = Some(bus);
+        self
     }
 
     /// Execute a write query with automatic SQLITE_BUSY retry.
