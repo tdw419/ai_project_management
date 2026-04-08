@@ -585,3 +585,149 @@ pub async fn delete(
         "agentName": agent.name,
     })))
 }
+
+// ── V2-P3: Human Injection Channel ────────────────────────────────────────
+
+#[derive(Debug, serde::Deserialize)]
+pub struct InjectRequest {
+    pub message: String,
+    #[serde(default = "default_priority")]
+    pub priority: String,
+    #[serde(default = "default_source")]
+    pub source: String,
+}
+
+fn default_priority() -> String { "normal".to_string() }
+fn default_source() -> String { "human".to_string() }
+
+/// Inject a guidance message into an agent's context.
+/// The harness picks up unread injections on each loop iteration.
+/// POST /api/agents/{aid}/inject
+pub async fn inject(
+    State(state): State<SharedState>,
+    Path(aid): Path<String>,
+    Json(body): Json<InjectRequest>,
+) -> AppResult<Json<serde_json::Value>> {
+    // Verify agent exists
+    let agent = query_as::<_, Agent>("SELECT * FROM agents WHERE id = ?")
+        .bind(&aid)
+        .fetch_optional(&state.pool)
+        .await?
+        .ok_or_else(|| AppError::NotFound(format!("Agent {} not found", aid)))?;
+
+    crate::validation::require_non_empty(&body.message, "message")?;
+    crate::validation::validate_opt_enum(
+        &Some(body.priority.clone()),
+        "priority",
+        &["low", "normal", "high", "urgent"],
+    )?;
+    crate::validation::validate_opt_enum(
+        &Some(body.source.clone()),
+        "source",
+        &["human", "system", "overseer"],
+    )?;
+
+    let id = Uuid::new_v4().to_string();
+
+    sqlx::query(
+        "INSERT INTO agent_injections (id, agent_id, message, priority, source) VALUES (?, ?, ?, ?, ?)"
+    )
+        .bind(&id)
+        .bind(&aid)
+        .bind(&body.message)
+        .bind(&body.priority)
+        .bind(&body.source)
+        .execute(&state.pool)
+        .await?;
+
+    // Log the injection
+    let activity_id = Uuid::new_v4().to_string();
+    let _ = sqlx::query(
+        "INSERT INTO activity_log (id, company_id, actor_type, actor_id, action, entity_type, entity_id, details)\
+         VALUES (?, ?, 'human', ?, 'inject', 'agent', ?, ?)"
+    )
+        .bind(&activity_id)
+        .bind(&agent.company_id)
+        .bind(&aid)
+        .bind(&id)
+        .bind(serde_json::json!({
+            "message_preview": body.message.chars().take(100).collect::<String>(),
+            "priority": body.priority,
+        }).to_string())
+        .execute(&state.pool)
+        .await;
+
+    tracing::info!(
+        "Injection queued for agent {} ({}): [{}] {}",
+        agent.name, aid, body.priority,
+        body.message.chars().take(80).collect::<String>()
+    );
+
+    Ok(Json(serde_json::json!({
+        "id": id,
+        "agentId": aid,
+        "agentName": agent.name,
+        "status": "queued",
+        "priority": body.priority,
+    })))
+}
+
+/// Poll for unread injections for an agent.
+/// Returns unread messages and marks them as read.
+/// GET /api/agents/{aid}/injections
+pub async fn poll_injections(
+    State(state): State<SharedState>,
+    Path(aid): Path<String>,
+) -> AppResult<Json<serde_json::Value>> {
+    // Verify agent exists
+    let _agent = query_as::<_, Agent>("SELECT * FROM agents WHERE id = ?")
+        .bind(&aid)
+        .fetch_optional(&state.pool)
+        .await?
+        .ok_or_else(|| AppError::NotFound(format!("Agent {} not found", aid)))?;
+
+    // Fetch unread injections, ordered by priority then creation time
+    let injections = sqlx::query_as::<_, (String, String, String, String, String, String)>(
+        "SELECT id, message, priority, source, created_at, read_at \
+         FROM agent_injections \
+         WHERE agent_id = ? AND read = 0 \
+         ORDER BY CASE priority \
+             WHEN 'urgent' THEN 0 \
+             WHEN 'high' THEN 1 \
+             WHEN 'normal' THEN 2 \
+             ELSE 3 \
+         END, created_at"
+    )
+        .bind(&aid)
+        .fetch_all(&state.pool)
+        .await?;
+
+    let count = injections.len();
+
+    // Mark all as read
+    if count > 0 {
+        sqlx::query(
+            "UPDATE agent_injections SET read = 1, read_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') \
+             WHERE agent_id = ? AND read = 0"
+        )
+            .bind(&aid)
+            .execute(&state.pool)
+            .await?;
+    }
+
+    let results: Vec<serde_json::Value> = injections.into_iter().map(|(id, message, priority, source, created_at, _read_at)| {
+        serde_json::json!({
+            "id": id,
+            "message": message,
+            "priority": priority,
+            "source": source,
+            "created_at": created_at,
+        })
+    }).collect();
+
+    Ok(Json(serde_json::json!({
+        "agentId": aid,
+        "count": count,
+        "injections": results,
+    })))
+}

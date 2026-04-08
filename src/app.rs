@@ -31,6 +31,9 @@ pub fn build_router(state: SharedState, rate_max: u32, rate_refill: u32, cors_or
         .route("/api/agents/{aid}/wakeup", post(crate::routes::agents::wakeup))
         .route("/api/agents/{aid}/invoke", post(crate::routes::agents::invoke))
         .route("/api/agents/{aid}/heartbeat", post(crate::routes::agents::heartbeat))
+        // V2-P3: Injection channel
+        .route("/api/agents/{aid}/inject", post(crate::routes::agents::inject))
+        .route("/api/agents/{aid}/injections", get(crate::routes::agents::poll_injections))
         // Issues
         .route("/api/companies/{cid}/issues", get(crate::routes::issues::list))
         .route("/api/issues/{iid}", get(crate::routes::issues::get))
