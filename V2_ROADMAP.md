@@ -117,7 +117,7 @@ To roll back: switch branch to main, tag v1-stable is always there.
 ## Success Metric
 
 v2 is done when:
-- [ ] A worker starts working within 1 second of an issue being created (webhooks)
-- [ ] A worker references past outcomes when solving a new issue (memory)
+- [x] A worker starts working within 1 second of an issue being created (webhooks) -- V2-P1 DONE
+- [x] A worker references past outcomes when solving a new issue (memory) -- V2-P2 DONE
 - [ ] Jericho can inject guidance into a running worker (injection channel)
 - [ ] Adding a new tool is "create a directory with manifest.yaml" (tool packs)
